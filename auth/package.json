@@ -1,0 +1,32 @@
+{
+  "name": "ibraheema05",
+  "version": "1.0.0",
+  "description": "Vulnerablle Microservices Application",
+  "homepage": "https://github.com/IbraheemA05/Microservice-Vulnerable-application#readme",
+  "bugs": {
+    "url": "https://github.com/IbraheemA05/Microservice-Vulnerable-application/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IbraheemA05/Microservice-Vulnerable-application.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "authController.js",
+  "scripts": {
+    "test": "nodemon authController"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.0",
+    "mongodb": "^7.0.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.3",
+    "mongoose": "^9.0.2",
+    "nodemailer": "^7.0.12"
+  }
+}
