@@ -46,21 +46,21 @@ jobs:
     # SAST (Code Analysis)
     # ------------------------
     - name: Run Snyk SAST (Auth & Settings)
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       run: |
         cd auth && snyk code test --severity-threshold=high
         cd ../settings && snyk code test --severity-threshold=high
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
     # ------------------------
     # SCA (Dependency Scan)
     # ------------------------
     - name: Run Snyk SCA
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       run: |
         cd auth && snyk test --severity-threshold=high
         cd ../settings && snyk test --severity-threshold=high
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
     # ------------------------
     # LOGIN TO DOCKER
