@@ -40,7 +40,7 @@ jobs:
     # SETUP SYFT CLI
     #-------------------------
     - name: Setup Syft
-      uses: anchore/syft-action@v3
+      uses: anchore/sbom-action@v0.16.0
 
     # ------------------------
     # SAST (Code Analysis)
