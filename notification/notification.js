@@ -51,7 +51,7 @@ app.post ("/send/email", authenticateToken, async (req, res) => {
 
 app.post("/send/sms", authenticateToken, async (req, res) => {
     const {phone, message} = req.body;
-})
+x})
 
 app.post("/send/push", authenticateToken, async (req, res) => {
     const {deviceToken, title, body} = req.body;
@@ -61,6 +61,11 @@ app.post("/send/push", authenticateToken, async (req, res) => {
 app.get("/notification", authenticateToken, (req, res) => {
     
 })
+
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.listen(PORT, () => {
     console.log(`Notification service is running on port http://localhost:${PORT}`);
 })
