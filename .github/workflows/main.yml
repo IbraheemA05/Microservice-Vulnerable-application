@@ -35,26 +35,40 @@ jobs:
     # ------------------------
     - name: Setup Snyk
       uses: snyk/actions/setup@master
+    
+    #-------------------------
+    # SETUP SYFT CLI
+    #-------------------------
+    - name: Setup Syft
+      uses: anchore/sbom-action@v0.16.0
 
+
+    #-------------------------
+    # AUTH & SETTINGS
+    #-------------------------
+    - name: Authenticate Snyk
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      run: snyk auth $SNYK_TOKEN
+    
     # ------------------------
     # SAST (Code Analysis)
     # ------------------------
     - name: Run Snyk SAST (Auth & Settings)
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       run: |
         cd auth && snyk code test --severity-threshold=high
         cd ../settings && snyk code test --severity-threshold=high
+      
+
 
     # ------------------------
     # SCA (Dependency Scan)
     # ------------------------
     - name: Run Snyk SCA
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       run: |
         cd auth && snyk test --severity-threshold=high
         cd ../settings && snyk test --severity-threshold=high
+      
 
     # ------------------------
     # LOGIN TO DOCKER
@@ -71,14 +85,12 @@ jobs:
     - name: Build Docker Images
       run: |
         docker build -t auth-service:${{ github.sha }} ./auth
-        docker build -t settings-service:${{ github.sha }} ./setting
+        docker build -t settings-service:${{ github.sha }} ./settings
 
     # ------------------------
     # CONTAINER SCANNING
     # ------------------------
     - name: Snyk Container Scan
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       run: |
         snyk container test auth-service:${{ github.sha }} --severity-threshold=high
         snyk container test settings-service:${{ github.sha }} --severity-threshold=high
@@ -87,8 +99,40 @@ jobs:
     # MONITOR (DASHBOARD)
     # ------------------------
     - name: Send Results to Snyk Dashboard
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       run: |
         snyk monitor --project-name=auth-service
         snyk monitor --project-name=settings-service
+    
+    #------------------------
+    # GENERATE SBOM WITH SYFT
+    #------------------------
+    - name: Generate SBOM with Syft
+      run: |
+        syft auth-service:${{ github.sha }} \
+          -o cyclonedx-json=auth-service.sbom.json
+
+        syft settings-service:${{ github.sha }} \
+          -o cyclonedx-json=settings-service.sbom.json
+
+    #------------------------
+    # UPLOAD SBOM TO SNYK
+    #------------------------
+    - name: Upload SBOM to Snyk
+      if: always()
+      run: |
+        snyk sbom test \
+        --file=auth-service.sbom.json \
+        --project-name=auth-service
+
+        snyk sbom test \
+        --file=settings-service.sbom.json \
+        --project-name=settings-service
+
+    - name: Upload SBOM artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom-${{ github.sha }}
+        path: |
+          auth-service.sbom.json
+          settings-service.sbom.json

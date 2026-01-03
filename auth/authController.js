@@ -10,7 +10,8 @@ const { notStrictEqual } = require("assert");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/UserDB";
+const mongoURI = process.env.MONGO_URI;
+
 
 mongoose
   .connect(mongoURI)
@@ -28,6 +29,7 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model("User", userSchema);
+
 
 app.post("/signup", async (req, res) => {
   const { username, email, password, confirmPassword } = req.body;
@@ -141,6 +143,12 @@ app.get("/passwordReset", async (req, res) => {
     res.status(404).send("Invalid or expired token");
   }
 });
+
+
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port http://localhost:${PORT}`);

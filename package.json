@@ -1,0 +1,23 @@
+{
+  "name": "microservices-vulnerable-application",
+  "version": "1.0.0",
+  "description": "''Microservice-Vulnerable application''",
+  "homepage": "https://github.com/IbraheemA05/Microservice-Vulnerable-application#readme",
+  "bugs": {
+    "url": "https://github.com/IbraheemA05/Microservice-Vulnerable-application/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IbraheemA05/Microservice-Vulnerable-application.git"
+  },
+  "license": "ISC",
+  "author": "IBRAHEEMA05",
+   "scripts": {
+    "server": "npm run test --prefix auth",
+    "client": "npm start --prefix setting",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
