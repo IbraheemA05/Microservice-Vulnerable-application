@@ -87,7 +87,7 @@ jobs:
        cd ..
 
        cd settings
-       snyk monitor --org=$SNYK_ORG --project-name=settings-service
+       snyk monitor --org=$SNYK_ORG --project-name=setting-service
        cd ..
 
       
