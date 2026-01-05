@@ -67,9 +67,29 @@ jobs:
     # ------------------------
     - name: Run Snyk SCA
       continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       run: |
+        snyk auth $SNYK_TOKEN
+
         cd auth && snyk test --severity-threshold=high || echo "Snyk scan found issues in auth"
-        cd setting && snyk test --severity-threshold=high || echo "Snyk scan found issues in setting"
+        cd ..
+
+        cd settings && snyk test --severity-threshold=high || echo "Snyk scan found issues in settings"
+        cd ..
+
+    - name: SCA Monitoring
+      env:
+        SNYK_ORG: ${{ secrets.SNYK_ORG }}
+      run: |
+       cd auth
+       snyk monitor --org=$SNYK_ORG --project-name=auth-service
+       cd ..
+
+       cd settings
+       snyk monitor --org=$SNYK_ORG --project-name=settings-service
+       cd ..
+
       
 
     # ------------------------
@@ -95,16 +115,35 @@ jobs:
     - name: Snyk Container Scan
       continue-on-error: true
       run: |
-        snyk container test auth-service:${{ github.sha }} --severity-threshold=high || echo"High impact vulnerability found in auth-service."
-        snyk container test settings-service:${{ github.sha }} --severity-threshold=high || echo "High impact vulnerability found in settings-service."
+        snyk container test auth-service:${{ github.sha }} \
+        --severity-threshold=high || echo "High impact vulnerability found in auth-service."
+
+        snyk container test settings-service:${{ github.sha }} \
+        --severity-threshold=high || echo "High impact vulnerability found in settings-service."
+        
+    - name: Container Monitoring
+      env:
+        SNYK_ORG: ${{ secrets.SNYK_ORG }}
+      run: |
+        snyk container monitor auth-service:${{ github.sha }} \
+        --org=$SNYK_ORG \
+        --project-name=auth-service-image
+
+        snyk container monitor settings-service:${{ github.sha }} \
+        --org=$SNYK_ORG \
+        --project-name=settings-service-image
+
+     
+
+
 
     # ------------------------
     # MONITOR (DASHBOARD)
     # ------------------------
-    - name: Send Results to Snyk Dashboard
-      run: |
-        snyk monitor --project-name=auth-service
-        snyk monitor --project-name=settings-service
+   # - name: Send Results to Snyk Dashboard
+    #  run: |
+     #   snyk monitor --project-name=auth-service
+    #    snyk monitor --project-name=settings-service
     
     #------------------------
     # GENERATE SBOM WITH SYFT
