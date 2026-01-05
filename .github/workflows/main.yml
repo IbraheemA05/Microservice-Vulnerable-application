@@ -75,7 +75,7 @@ jobs:
         cd auth && snyk test --severity-threshold=high || echo "Snyk scan found issues in auth"
         cd ..
 
-        cd settings && snyk test --severity-threshold=high || echo "Snyk scan found issues in settings"
+        cd setting && snyk test --severity-threshold=high || echo "Snyk scan found issues in settings"
         cd ..
 
     - name: SCA Monitoring
