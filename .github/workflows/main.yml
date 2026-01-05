@@ -57,7 +57,7 @@ jobs:
     - name: Run Snyk SAST (Auth & Settings)
       run: |
         cd auth && snyk code test --severity-threshold=high
-        cd ../settings && snyk code test --severity-threshold=high
+        cd ../settings\ && snyk code test --severity-threshold=high
       
 
 
@@ -67,7 +67,7 @@ jobs:
     - name: Run Snyk SCA
       run: |
         cd auth && snyk test --severity-threshold=high
-        cd ../settings && snyk test --severity-threshold=high
+        cd setting && snyk test --severity-threshold=high
       
 
     # ------------------------
@@ -85,7 +85,7 @@ jobs:
     - name: Build Docker Images
       run: |
         docker build -t auth-service:${{ github.sha }} ./auth
-        docker build -t settings-service:${{ github.sha }} ./settings
+        docker build -t settings-service:${{ github.sha }} ./setting
 
     # ------------------------
     # CONTAINER SCANNING
