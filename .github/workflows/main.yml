@@ -86,7 +86,7 @@ jobs:
        snyk monitor --org=$SNYK_ORG --project-name=auth-service
        cd ..
 
-       cd settings
+       cd setting
        snyk monitor --org=$SNYK_ORG --project-name=setting-service
        cd ..
 
