@@ -57,7 +57,7 @@ jobs:
     - name: Run Snyk SAST (Auth & Settings)
       run: |
         cd auth && snyk code test --severity-threshold=high
-        cd setting && snyk code test --severity-threshold=high
+        cd ../setting\ && snyk code test --severity-threshold=high
       
 
 
