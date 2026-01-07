@@ -199,9 +199,23 @@ jobs:
       run: |
           docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }} ./setting
           docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }}
+    
+    - name: Add digest to image #Very important because cosign need the digest to sign the image and {{github.sha}} is mutable according to docker tag
+      run: |
+        docker inspect \
+          --format='{{index .RepoDigests 0}}' \
+          docker.io/${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }}
+        echo "DIGEST=$DIGEST" >> $GITHUB_ENV #Way github pass data to next step
+
+
+        docker inspect \
+          --format='{{index .RepoDigests 0}}' \
+          docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }}
+        echo "DIGEST=$DIGEST" >> $GITHUB_ENV
 
     - name: Sign Image
       run: |
-          cosign sign docker.io/${{ secrets.DOCKER_USERNAME  }}/auth-service:${{ github.sha }}  
-          cosign sign docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }}
-          
+          env:
+            COSIGN_EXPERIMENTAL: "true"
+          run: |
+            cosign sign $DIGEST
