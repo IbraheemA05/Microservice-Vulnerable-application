@@ -205,17 +205,16 @@ jobs:
         docker inspect \
           --format='{{index .RepoDigests 0}}' \
           docker.io/${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }}
-        echo "AUTH_DIGEST=$AUTH_DIGEST" >> $GITHUB_ENV #Way github pass data to next step
+        echo "DIGEST=$DIGEST" >> $GITHUB_ENV #Way github pass data to next step
 
 
-          docker inspect \
-          --format='{{index .RepoDigests 0}}' \
-            docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }}
-          echo "SETTINGS_DIGEST=$SETTINGS_DIGEST" >> $GITHUB_ENV
+        # docker inspect \
+        # --format='{{index .RepoDigests 0}}' \
+        #  docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }}
+       #  echo "DIGEST=$DIGEST" >> $GITHUB_ENV
 
-    - name: Sign Image
+    - name: Sign Image with consign
       env:
          COSIGN_EXPERIMENTAL: "true" #This is to acknowledge the experimental feature(keyless signing)
       run: |
-            cosign sign $AUTH_DIGEST
-            cosign sign $SETTINGS_DIGEST
+            cosign sign $DIGEST
