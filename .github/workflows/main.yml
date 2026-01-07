@@ -214,8 +214,7 @@ jobs:
         echo "DIGEST=$DIGEST" >> $GITHUB_ENV
 
     - name: Sign Image
+      env:
+         COSIGN_EXPERIMENTAL: "true"
       run: |
-          env:
-            COSIGN_EXPERIMENTAL: "true"
-          run: |
             cosign sign $DIGEST
