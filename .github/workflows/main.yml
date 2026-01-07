@@ -208,10 +208,10 @@ jobs:
         echo "DIGEST=$DIGEST" >> $GITHUB_ENV #Way github pass data to next step
 
 
-        docker inspect \
-          --format='{{index .RepoDigests 0}}' \
-          docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }}
-        echo "DIGEST=$DIGEST" >> $GITHUB_ENV
+        # docker inspect \
+        # --format='{{index .RepoDigests 0}}' \
+        #  docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }}
+       #  echo "DIGEST=$DIGEST" >> $GITHUB_ENV
 
     - name: Sign Image
       env:
