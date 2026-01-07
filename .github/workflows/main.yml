@@ -211,7 +211,7 @@ jobs:
           docker inspect \
           --format='{{index .RepoDigests 0}}' \
             docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }}
-          echo "SETTINGS_DIGEST=$AUTH_DIGEST" >> $GITHUB_ENV
+          echo "SETTINGS_DIGEST=$SETTINGS_DIGEST" >> $GITHUB_ENV
 
     - name: Sign Image
       env:
