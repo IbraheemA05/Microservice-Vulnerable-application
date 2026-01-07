@@ -201,24 +201,28 @@ jobs:
           docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }}
     
     - name: Add digest to image #Very important because cosign need the digest to sign the image and {{github.sha}} is mutable according to docker tag
-      run: |
-        docker inspect \
+       run: |
+        AUTH_DIGEST=$(docker inspect \
           --format='{{index .RepoDigests 0}}' \
-          docker.io/${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }}
-       
+          docker.io/${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }})
 
-
-        docker inspect \
+        SETTINGS_DIGEST=$(docker inspect \
           --format='{{index .RepoDigests 0}}' \
-          docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }}
+          docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }})
+
+        echo "AUTH_DIGEST=$AUTH_DIGEST" >> $GITHUB_ENV #Way github pass data to next step
+        echo "SETTINGS_DIGEST=$SETTINGS_DIGEST" >> $GITHUB_ENV
         
-
-        echo "AUTH_DIGEST=$AUTH_DIGEST" >> $GITHUB_ENV  #Way github pass data to next step
-        echo "SETTINGS_DIGEST=$SETTINGS_DIGEST" >> $GITHUB_ENV    
 
     - name: Sign Image with consign
       env:
          COSIGN_EXPERIMENTAL: "true" #This is to acknowledge the experimental feature(keyless signing)
       run: |
-            cosign sign $AUTH_DIGEST
-            cosign sign $SETTINGS_DIGEST
+        cosign sign $AUTH_DIGEST
+        cosign sign $SETTINGS_DIGEST
+
+    - name: Debug digests
+      run: |
+        echo "Auth digest: $AUTH_DIGEST"
+        echo "Settings digest: $SETTINGS_DIGEST"
+
