@@ -192,16 +192,16 @@ jobs:
 
     - name: Build & Push Image
       run: |
-          docker build -t docker.io/ibraheema05/auth-service:${{ github.sha }} ./auth
-          docker push docker.io/ibraheema05/auth-service:${{ github.sha }}
+          docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/auth-service:${{ github.sha }} ./auth
+          docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/auth-service:${{ github.sha }}
 
     - name: Build & Push Image
       run: |
-          docker build -t docker.io/ibraheema05/settings-service:${{ github.sha }} ./setting
-          docker push docker.io/ibraheema05/settings-service:${{ github.sha }}
+          docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }} ./setting
+          docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }}
 
     - name: Sign Image
       run: |
-          cosign sign docker.io/ibraheema05/auth-service:${{ github.sha }}  
-          cosign sign docker.io/ibraheema05/settings-service:${{ github.sha }}
+          cosign sign docker.io/${{ secrets.DOCKER_USERNAME  }}/auth-service:${{ github.sha }}  
+          cosign sign docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }}
           
