@@ -225,4 +225,11 @@ jobs:
       run: |
         echo "Auth digest: $AUTH_DIGEST"
         echo "Settings digest: $SETTINGS_DIGEST"
+      
+    - name: Run DB Migrations
+      run: |
+        node db/migrate.js
+      env:
+        MONGO_URI: mongodb://mongo:27017
+        MONGO_DB_NAME: microservices
 
