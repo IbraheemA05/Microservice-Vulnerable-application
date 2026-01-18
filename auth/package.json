@@ -15,18 +15,21 @@
   "type": "commonjs",
   "main": "authController.js",
   "scripts": {
-    "test": "nodemon authController"
+    "test": "nodemon authController",
+    "start": "node authController.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.0",
     "mongodb": "^7.0.0",
-    "uuid": "^13.0.0"
+    "mongoose": "^9.0.2",
+    "dotenv": "^17.2.3",
+    "uuid": "^13.0.0",
+    "nodemailer": "^7.0.12"
   },
   "devDependencies": {
-    "dotenv": "^17.2.3",
-    "mongoose": "^9.0.2",
-    "nodemailer": "^7.0.12"
+    "nodemon": "^3.0.0"
   }
 }
+
