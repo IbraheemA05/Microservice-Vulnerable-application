@@ -2,9 +2,11 @@
   "name": "setting-service",
   "version": "1.0.0",
   "description": "User setting service",
+  "type": "commonjs",
   "main": "userSetting.js",
   "scripts": {
-    "start": "nodemon userSetting.js"
+    "dev": "nodemon userSetting.js",
+    "start": "node userSetting.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
@@ -15,5 +17,22 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["microservice", "settings", "user", "profile", "api", "nodejs", "express", "mongodb"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Ibraheem A05",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/IbraheemA05/Microservice-Vulnerable-application/issues"
+  },
+  "homepage": "https://github.com/IbraheemA05/Microservice-Vulnerable-application#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IbraheemA05/Microservice-Vulnerable-application.git"
   }
 }
