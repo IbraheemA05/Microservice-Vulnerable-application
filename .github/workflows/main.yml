@@ -10,245 +10,255 @@ jobs:
   build-and-secure:
     runs-on: ubuntu-latest
 
+    services:
+      mongo:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     permissions:
       contents: read
       packages: write
       id-token: write #required for cosign
 
     steps:
-    # ------------------------
-    # CHECKOUT CODE
-    # ------------------------
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      # ------------------------
+      # CHECKOUT CODE
+      # ------------------------
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    # ------------------------
-    # SETUP NODE
-    # ------------------------
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
+      # ------------------------
+      # SETUP NODE
+      # ------------------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-    #-------------------------
-    # Mongo db setup
-    #-------------------------
-    - name: Setup MongoDB
-      uses: mongo/mongo-action@master
+      #-------------------------
+      # Wait for MongoDB to be ready
+      #-------------------------
+      - name: Wait for MongoDB
+        run: |
+          echo "Waiting for MongoDB to be ready..."
+          timeout 60 bash -c 'until mongosh --host localhost:27017 --eval "db.runCommand({ping: 1})" > /dev/null 2>&1; do sleep 2; done'
+          echo "MongoDB is ready!"
 
-    # ------------------------
-    # SETUP ZAP
-    # ------------------------
-    - name: Setup OWASP ZAP
-      uses: owasp/zap2docker-stable@master
+      #-------------------------
+      # Mongo db setup
+      #-------------------------
+      - name: Setup MongoDB
+        run: |
+          echo "MongoDB is already running as a service"
+          mongosh --host localhost:27017 --eval "db.runCommand({ping: 1})"
 
-    # ------------------------
-    # SETUP SNYK CLI
-    # ------------------------
-    - name: Setup Snyk
-      uses: snyk/actions/setup@master
-    
-    #-------------------------
-    # SETUP SYFT CLI
-    #-------------------------
-    - name: Setup Syft
-      uses: anchore/sbom-action@v0.16.0
+      # ------------------------
+      # SETUP ZAP
+      # ------------------------
+      - name: Setup OWASP ZAP
+        uses: owasp/zap2docker-stable@master
 
+      # ------------------------
+      # SETUP SNYK CLI
+      # ------------------------
+      - name: Setup Snyk
+        uses: snyk/actions/setup@master
 
-    #-------------------------
-    # AUTH & SETTINGS
-    #-------------------------
-    - name: Authenticate Snyk
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      run: snyk auth $SNYK_TOKEN
-    
-    # ------------------------
-    # SAST (Code Analysis)
-    # ------------------------
-    - name: Run Snyk SAST (Auth & Settings)
-      continue-on-error: true #This is use to ensure the build completes even if there are issues
-      run: |
-        cd auth && snyk code test --severity-threshold=high
-        cd ../setting && snyk code test --severity-threshold=high || echo "Snyk scan found issues in setting"
-      
+      #-------------------------
+      # SETUP SYFT CLI
+      #-------------------------
+      - name: Setup Syft
+        uses: anchore/sbom-action@v0.16.0
 
+      #-------------------------
+      # AUTH & SETTINGS
+      #-------------------------
+      - name: Authenticate Snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk auth $SNYK_TOKEN
 
-    # ------------------------
-    # SCA (Dependency Scan)
-    # ------------------------
-    - name: Run Snyk SCA
-      continue-on-error: true #This is use to ensure the build completes even if there are issues
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      run: |
-        snyk auth $SNYK_TOKEN
+      # ------------------------
+      # SAST (Code Analysis)
+      # ------------------------
+      - name: Run Snyk SAST (Auth & Settings)
+        continue-on-error: true #This is use to ensure the build completes even if there are issues
+        run: |
+          cd auth && snyk code test --severity-threshold=high
+          cd ../setting && snyk code test --severity-threshold=high || echo "Snyk scan found issues in setting"
 
-        cd auth && snyk test --severity-threshold=high || echo "Snyk scan found issues in auth"
-        cd ..
+      # ------------------------
+      # SCA (Dependency Scan)
+      # ------------------------
+      - name: Run Snyk SCA
+        continue-on-error: true #This is use to ensure the build completes even if there are issues
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk auth $SNYK_TOKEN
 
-        cd setting && snyk test --severity-threshold=high || echo "Snyk scan found issues in settings"
-        cd ..
+          cd auth && snyk test --severity-threshold=high || echo "Snyk scan found issues in auth"
+          cd ..
 
-    - name: SCA Monitoring
-      env:
-        SNYK_ORG: ${{ secrets.SNYK_ORG }}
-      run: |
-       cd auth
-       snyk monitor --org=$SNYK_ORG --project-name=auth-service
-       cd ..
+          cd setting && snyk test --severity-threshold=high || echo "Snyk scan found issues in settings"
+          cd ..
 
-       cd setting
-       snyk monitor --org=$SNYK_ORG --project-name=setting-service
-       cd ..
+      - name: SCA Monitoring
+        env:
+          SNYK_ORG: ${{ secrets.SNYK_ORG }}
+        run: |
+          cd auth
+          snyk monitor --org=$SNYK_ORG --project-name=auth-service
+          cd ..
 
-      
+          cd setting
+          snyk monitor --org=$SNYK_ORG --project-name=setting-service
+          cd ..
 
-    # ------------------------
-    # LOGIN TO DOCKER
-    # ------------------------
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      # ------------------------
+      # LOGIN TO DOCKER
+      # ------------------------
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # ------------------------
-    # BUILD IMAGES
-    # ------------------------
-    - name: Build Docker Images
-      run: |
-        docker build -t auth-service:${{ github.sha }} ./auth
-        docker build -t settings-service:${{ github.sha }} ./setting
+      # ------------------------
+      # BUILD IMAGES
+      # ------------------------
+      - name: Build Docker Images
+        run: |
+          docker build -t auth-service:${{ github.sha }} ./auth
+          docker build -t settings-service:${{ github.sha }} ./setting
 
-    # ------------------------
-    # CONTAINER SCANNING
-    # ------------------------
-    - name: Snyk Container Scan
-      continue-on-error: true #This is use to ensure the build completes even if there are issues
-      run: |
-        snyk container test auth-service:${{ github.sha }} \
-        --severity-threshold=high || echo "High impact vulnerability found in auth-service."
+      # ------------------------
+      # CONTAINER SCANNING
+      # ------------------------
+      - name: Snyk Container Scan
+        continue-on-error: true #This is use to ensure the build completes even if there are issues
+        run: |
+          snyk container test auth-service:${{ github.sha }} \
+          --severity-threshold=high || echo "High impact vulnerability found in auth-service."
 
-        snyk container test settings-service:${{ github.sha }} \
-        --severity-threshold=high || echo "High impact vulnerability found in settings-service."
-        
-    - name: Container Monitoring
-      env:
-        SNYK_ORG: ${{ secrets.SNYK_ORG }}
-      run: |
-        snyk container monitor auth-service:${{ github.sha }} \
-        --org=$SNYK_ORG \
-        --project-name=auth-service-image
+          snyk container test settings-service:${{ github.sha }} \
+          --severity-threshold=high || echo "High impact vulnerability found in settings-service."
 
-        snyk container monitor settings-service:${{ github.sha }} \
-        --org=$SNYK_ORG \
-        --project-name=settings-service-image
+      - name: Container Monitoring
+        env:
+          SNYK_ORG: ${{ secrets.SNYK_ORG }}
+        run: |
+          snyk container monitor auth-service:${{ github.sha }} \
+          --org=$SNYK_ORG \
+          --project-name=auth-service-image
 
-     
+          snyk container monitor settings-service:${{ github.sha }} \
+          --org=$SNYK_ORG \
+          --project-name=settings-service-image
 
+      # ------------------------
+      # MONITOR (DASHBOARD)
+      # ------------------------
+      # - name: Send Results to Snyk Dashboard
+      #  run: |
+      #   snyk monitor --project-name=auth-service
+      #    snyk monitor --project-name=settings-service
 
+      #------------------------
+      # GENERATE SBOM WITH SYFT
+      #------------------------
+      - name: Generate SBOM with Syft
+        run: |
+          syft auth-service:${{ github.sha }} \
+            -o cyclonedx-json=auth-service.sbom.json
 
-    # ------------------------
-    # MONITOR (DASHBOARD)
-    # ------------------------
-   # - name: Send Results to Snyk Dashboard
-    #  run: |
-     #   snyk monitor --project-name=auth-service
-    #    snyk monitor --project-name=settings-service
-    
-    #------------------------
-    # GENERATE SBOM WITH SYFT
-    #------------------------
-    - name: Generate SBOM with Syft
-      run: |
-        syft auth-service:${{ github.sha }} \
-          -o cyclonedx-json=auth-service.sbom.json
+          syft settings-service:${{ github.sha }} \
+            -o cyclonedx-json=settings-service.sbom.json
 
-        syft settings-service:${{ github.sha }} \
-          -o cyclonedx-json=settings-service.sbom.json
+      #------------------------
+      # UPLOAD SBOM TO SNYK
+      #------------------------
+      - name: Upload SBOM to Snyk
+        if: always()
+        run: |
+          snyk sbom test \
+          --file=auth-service.sbom.json \
+          --project-name=auth-service
 
-    #------------------------
-    # UPLOAD SBOM TO SNYK
-    #------------------------
-    - name: Upload SBOM to Snyk
-      if: always()
-      run: |
-        snyk sbom test \
-        --file=auth-service.sbom.json \
-        --project-name=auth-service
+          snyk sbom test \
+          --file=settings-service.sbom.json \
+          --project-name=settings-service
 
-        snyk sbom test \
-        --file=settings-service.sbom.json \
-        --project-name=settings-service
+      - name: Upload SBOM artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: |
+            auth-service.sbom.json
+            settings-service.sbom.json
 
-    - name: Upload SBOM artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: sbom-${{ github.sha }}
-        path: |
-          auth-service.sbom.json
-          settings-service.sbom.json
-    
+      #-------------------------
+      # COSIGN AND SIGSTORE
+      #-------------------------
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@main
+        with:
+          cosign-release: "v3.0.3"
+      - name: Check Version
+        run: cosign version
 
-    #-------------------------
-    # COSIGN AND SIGSTORE
-    #-------------------------
-    - name: Install Cosign
-      uses: sigstore/cosign-installer@main
-      with:
-        cosign-release: 'v3.0.3'
-    - name: Check Version
-      run: cosign version
-
-    - name: Build & Push Image
-      run: |
+      - name: Build & Push Image
+        run: |
           docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/auth-service:${{ github.sha }} ./auth
           docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/auth-service:${{ github.sha }}
 
-    - name: Build & Push Image
-      run: |
+      - name: Build & Push Image
+        run: |
           docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }} ./setting
           docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }}
-    
-    - name: Add digest to image #Very important because cosign need the digest to sign the image and {{github.sha}} is mutable according to docker tag
-      run: |
-        AUTH_DIGEST=$(docker inspect \
-          --format='{{index .RepoDigests 0}}' \
-          docker.io/${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }})
 
-        SETTINGS_DIGEST=$(docker inspect \
-          --format='{{index .RepoDigests 0}}' \
-          docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }})
+      - name: Add digest to image #Very important because cosign need the digest to sign the image and {{github.sha}} is mutable according to docker tag
+        run: |
+          AUTH_DIGEST=$(docker inspect \
+            --format='{{index .RepoDigests 0}}' \
+            docker.io/${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }})
 
-        echo "AUTH_DIGEST=$AUTH_DIGEST" >> $GITHUB_ENV #Way github pass data to next step
-        echo "SETTINGS_DIGEST=$SETTINGS_DIGEST" >> $GITHUB_ENV
-        
+          SETTINGS_DIGEST=$(docker inspect \
+            --format='{{index .RepoDigests 0}}' \
+            docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }})
 
-    - name: Sign Image with consign
-      env:
-         COSIGN_EXPERIMENTAL: "true" #This is to acknowledge the experimental feature(keyless signing)
-      run: |
-        cosign sign $AUTH_DIGEST
-        cosign sign $SETTINGS_DIGEST
+          echo "AUTH_DIGEST=$AUTH_DIGEST" >> $GITHUB_ENV #Way github pass data to next step
+          echo "SETTINGS_DIGEST=$SETTINGS_DIGEST" >> $GITHUB_ENV
 
-    - name: Debug digests
-      run: |
-        echo "Auth digest: $AUTH_DIGEST"
-        echo "Settings digest: $SETTINGS_DIGEST"
-      
-    - name: Run DB Migrations
-      run: |
-        node db/migrate.js
-      env:
-        MONGO_URI: mongodb://mongo:27017
-        MONGO_DB_NAME: microservices
+      - name: Sign Image with consign
+        env:
+          COSIGN_EXPERIMENTAL: "true" #This is to acknowledge the experimental feature(keyless signing)
+        run: |
+          cosign sign $AUTH_DIGEST
+          cosign sign $SETTINGS_DIGEST
 
-    #------------------------------
-    # DAST SCANNING
-    #------------------------------
-    - name: Run DAST Scan with OWASP ZAP
-      run: |
-        docker run -v $(pwd):/zap/wrk/:rw --network="host" owasp/zap2docker-stable zap-full-scan.py -t http://localhost:4000 -r scan-report.html
-        
+      - name: Debug digests
+        run: |
+          echo "Auth digest: $AUTH_DIGEST"
+          echo "Settings digest: $SETTINGS_DIGEST"
+
+      - name: Run DB Migrations
+        run: |
+          node db/migrate.js
+        env:
+          MONGO_URI: mongodb://localhost:27017
+          MONGO_DB_NAME: microservices
+
+      #------------------------------
+      # DAST SCANNING
+      #------------------------------
+      - name: Run DAST Scan with OWASP ZAP
+        run: |
+          docker run -v $(pwd):/zap/wrk/:rw --network="host" owasp/zap2docker-stable zap-full-scan.py -t http://localhost:4000 -r scan-report.html
