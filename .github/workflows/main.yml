@@ -45,12 +45,6 @@ jobs:
       # MOngo port
       #-----------------------------
 
-      - name: Wait for MongoDB port
-        run: |
-          echo "Waiting for MongoDB port..."
-          timeout 60 bash -c 'until nc -z mongo 27017; do sleep 2; done'
-          echo "MongoDB port is open"
-
       # ------------------------
       # SETUP ZAP
       # ------------------------
