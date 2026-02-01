@@ -10,7 +10,11 @@ export async function up(db) {
           userId: { bsonType: "string" },
           username: { bsonType: "string" },
           email: { bsonType: "string" },
-          password: { bsonType: "string" }
+          password: { bsonType: "string" },
+          resetToken: { bsonType: ["string", "null"] },
+          resetTokenExpiry: { bsonType: ["date", "null"] },
+          createdAt: { bsonType: "date" },
+          updatedAt: { bsonType: "date" }
         }
       }
     }
@@ -19,6 +23,7 @@ export async function up(db) {
   await db.collection("users").createIndexes([
     { key: { userId: 1 }, unique: true },
     { key: { email: 1 }, unique: true },
-    { key: { username: 1 }, unique: true }
+    { key: { username: 1 }, unique: true },
+    { key: { resetToken: 1 }, sparse: true }
   ]);
 }
