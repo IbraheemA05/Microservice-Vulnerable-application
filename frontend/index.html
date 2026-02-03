@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MicroSec | Vulnerable Application</title>
+    <link rel="stylesheet" href="css/style.css?v=2" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  </head>
+  <body>
+    <canvas id="bg"></canvas>
+
+    <header class="landing-header">
+      <nav class="landing-nav">
+        <a href="#" class="logo">
+          <i class="fa-solid fa-shield-halved" style="color: var(--primary)"></i>
+          <span>MicroSec</span>
+        </a>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#security">Security</a></li>
+          <li><a href="login.html">Login</a></li>
+          <li><a href="signup.html" class="cta">Get Access</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Hero Section -->
+      <section class="hero">
+        <div class="hero-content">
+          <h1>
+            Secure Your <br />
+            <span class="gradient-text">Microservices</span>
+          </h1>
+          <p>
+            An interactive 3D visualization platform designed to demonstrate, analyze, and mitigate common microservice security vulnerabilities in real-time.
+          </p>
+          <div class="btn-group">
+            <a href="signup.html" class="btn-primary">
+              Start Simulation <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            <a href="#features" class="btn-glass">
+              Learn More
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section id="features">
+        <div class="section-header">
+          <h2>Platform Capabilities</h2>
+          <p>Advanced tools for security research and testing</p>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <i class="fa-solid fa-cube fa-2x" style="color: var(--primary); margin-bottom: 1rem;"></i>
+            <h3>3D Visualization</h3>
+            <p>Real-time architectural mapping of your microservices showing data flow, latency, and active connections in an immersive 3D space.</p>
+          </div>
+          <div class="card">
+            <i class="fa-solid fa-user-shield fa-2x" style="color: var(--secondary); margin-bottom: 1rem;"></i>
+            <h3>Vulnerability Lab</h3>
+            <p>Safe, contained environment to test common exploits like broken authentication, injection attacks, and insecure deserialization.</p>
+          </div>
+          <div class="card">
+            <i class="fa-solid fa-network-wired fa-2x" style="color: var(--accent); margin-bottom: 1rem;"></i>
+            <h3>Traffic Analysis</h3>
+            <p>Inspect JWT tokens, headers, and payloads in flight. Visual indicators for exposed endpoints and data leaks.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Connection Legend (Fixed Overlay) -->
+      <div class="legend" style="
+        position: fixed; 
+        bottom: 2rem; 
+        left: 2rem; 
+        background: rgba(13, 17, 26, 0.8); 
+        padding: 1.5rem; 
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.1);
+        z-index: 50;">
+        <h4 style="margin-bottom: 1rem; color: var(--text-main);">Network Status</h4>
+        <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+          <li style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted);">
+            <span style="width: 10px; height: 10px; background: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success);"></span> Trusted
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted);">
+            <span style="width: 10px; height: 10px; background: #ffaa00; border-radius: 50%; box-shadow: 0 0 10px #ffaa00;"></span> Warning
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted);">
+            <span style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent);"></span> Critical
+          </li>
+        </ul>
+      </div>
+
+    </main>
+
+    <footer>
+      <div class="footer-content">
+        <p>&copy; 2024 MicroService Vulnerable App. Educational Security Project.</p>
+      </div>
+    </footer>
+
+    <!-- JWT Tooltip Container -->
+    <div id="jwt-tooltip" class="jwt-tooltip" style="display: none">
+      <div class="jwt-header">Header</div>
+      <div class="jwt-payload">Payload</div>
+      <div class="jwt-signature">Signature</div>
+    </div>
+
+    <!-- Service Info Modal -->
+    <div id="service-modal" class="service-modal">
+      <div class="modal-content">
+        <button class="modal-close" id="modal-close">&times;</button>
+        <div class="modal-header">
+          <span class="modal-icon" id="modal-icon"></span>
+          <h2 id="modal-title">Service Name</h2>
+        </div>
+        <div class="modal-body">
+          <div class="info-row">
+            <span class="info-label">Container</span>
+            <span class="info-value" id="modal-container">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Port</span>
+            <span class="info-value" id="modal-port">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Network</span>
+            <span class="info-value" id="modal-network">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Dependencies</span>
+            <span class="info-value" id="modal-depends">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Health Check</span>
+            <span class="info-value" id="modal-health">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Imports -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.157.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="js/main.js"></script>
+    
+    <!-- Smooth Scroll Script -->
+    <script>
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

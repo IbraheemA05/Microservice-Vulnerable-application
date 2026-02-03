@@ -1,0 +1,24 @@
+{
+  "name": "notification-service",
+  "version": "1.0.0",
+  "description": "Vulnerable notification microservice for security testing",
+  "main": "notificationService.js",
+  "scripts": {
+    "start": "node notificationService.js",
+    "dev": "nodemon notificationService.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.0.0",
+    "cookie-parser": "^1.4.6",
+    "jsonwebtoken": "^9.0.0",
+    "nodemailer": "^6.9.1",
+    "cors": "^2.8.5",
+    "axios": "^1.6.0",
+    "handlebars": "^4.7.8",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}

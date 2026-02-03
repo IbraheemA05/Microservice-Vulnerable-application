@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | MicroSec</title>
+  <link rel="stylesheet" href="css/simple-bw.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="dashboard-page">
+  
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="index.html" class="logo">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>MicroSec</span>
+      </a>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="overview">
+        <i class="fa-solid fa-grip"></i>
+        <span>Overview</span>
+      </a>
+      <a href="#" class="nav-item" data-section="profile">
+        <i class="fa-solid fa-user"></i>
+        <span>Profile</span>
+      </a>
+      <a href="#" class="nav-item" data-section="services">
+        <i class="fa-solid fa-cubes"></i>
+        <span>Services</span>
+      </a>
+      <a href="#" class="nav-item" data-section="notifications">
+        <i class="fa-solid fa-bell"></i>
+        <span>Notifications</span>
+      </a>
+      <a href="#" class="nav-item" data-section="files">
+        <i class="fa-solid fa-file"></i>
+        <span>Files</span>
+      </a>
+      <a href="settings.html" class="nav-item" data-section="settings">
+        <i class="fa-solid fa-gear"></i>
+        <span>Settings</span>
+      </a>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <button class="logout-btn" id="logout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="dashboard-main">
+    
+    <!-- Top Bar -->
+    <header class="dashboard-header">
+      <div class="search-bar">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" placeholder="Search services..." />
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn"><i class="fa-solid fa-bell"></i></button>
+        <div class="user-menu" id="user-menu">
+          <div class="user-avatar" id="user-avatar">U</div>
+          <span id="header-username">User</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-content">
+      
+      <!-- Overview Section -->
+      <section id="section-overview" class="dashboard-section active">
+        <h1>Welcome back, <span id="welcome-name">User</span>!</h1>
+        <p class="section-subtitle">Here's what's happening with your services today.</p>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(0, 255, 157, 0.1); color: var(--success);">
+              <i class="fa-solid fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+              <h3>3</h3>
+              <p>Services Online</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(255, 0, 85, 0.1); color: var(--accent);">
+              <i class="fa-solid fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-info">
+              <h3>2</h3>
+              <p>Vulnerabilities</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);">
+              <i class="fa-solid fa-network-wired"></i>
+            </div>
+            <div class="stat-info">
+              <h3>5</h3>
+              <p>Active Connections</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: rgba(112, 0, 255, 0.1); color: var(--secondary);">
+              <i class="fa-solid fa-clock"></i>
+            </div>
+            <div class="stat-info">
+              <h3>99.9%</h3>
+              <p>Uptime</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Services Quick View -->
+        <h2 class="section-title">Active Services</h2>
+        <div class="services-grid" id="services-grid">
+          <!-- Services will be dynamically loaded -->
+        </div>
+      </section>
+
+      <!-- Profile Section -->
+      <section id="section-profile" class="dashboard-section">
+        <h1>Your Profile</h1>
+        <p class="section-subtitle">Manage your account information</p>
+        
+        <div class="profile-card">
+          <div class="profile-avatar" id="profile-avatar">U</div>
+          <div class="profile-info">
+            <h2 id="profile-username">Loading...</h2>
+            <p id="profile-email">Loading...</p>
+            <span class="profile-badge">Standard User</span>
+          </div>
+          <div class="profile-actions" style="margin-left: auto;">
+            <input type="file" id="avatar-input" style="display: none;" accept="image/*" />
+            <button class="btn-glass" onclick="document.getElementById('avatar-input').click()">
+              <i class="fa-solid fa-camera"></i> Change Photo
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-form">
+          <h3>Change Username</h3>
+          <form id="change-name-form">
+            <div class="form-group">
+              <label for="new-username">New Username</label>
+              <input type="text" id="new-username" placeholder="Enter new username" />
+            </div>
+            <button type="submit" class="btn-primary">Update Username</button>
+          </form>
+          <div id="update-message" class="form-message"></div>
+        </div>
+      </section>
+
+      <!-- Services Section -->
+      <section id="section-services" class="dashboard-section">
+        <h1>Connected Services</h1>
+        <p class="section-subtitle">Monitor and manage your microservices</p>
+        
+        <div class="services-list" id="services-list">
+          <!-- Services will be dynamically loaded -->
+        </div>
+      </section>
+
+      <!-- Notifications Section -->
+      <section id="section-notifications" class="dashboard-section">
+        <h1>Notification Center</h1>
+        <p class="section-subtitle">Manage webhooks and templates</p>
+
+        <div class="settings-form">
+          <h3>Trigger Webhook (SSRF)</h3>
+          <form id="webhook-form">
+            <div class="form-group">
+              <label for="webhook-url">Target URL</label>
+              <input type="text" id="webhook-url" placeholder="http://example.com/callback" required />
+            </div>
+            <div class="form-group">
+              <label for="webhook-method">Method</label>
+              <select id="webhook-method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-primary">Trigger Webhook</button>
+          </form>
+          <div id="webhook-message" class="form-message"></div>
+        </div>
+
+        <div class="settings-form" style="margin-top: 2rem;">
+          <h3>Create Email Template (SSTI)</h3>
+          <form id="template-form">
+            <div class="form-group">
+              <label for="template-name">Template Name</label>
+              <input type="text" id="template-name" placeholder="welcome_email" required />
+            </div>
+            <div class="form-group">
+              <label for="template-subject">Subject</label>
+              <input type="text" id="template-subject" placeholder="Welcome {{username}}" required />
+            </div>
+            <div class="form-group">
+              <label for="template-body">Body (Handlebars supported)</label>
+              <textarea id="template-body" rows="4" placeholder="Hello {{username}}, welcome to our platform!" required></textarea>
+            </div>
+            <button type="submit" class="btn-primary">Create Template</button>
+          </form>
+          <div id="template-message" class="form-message"></div>
+        </div>
+      </section>
+
+      <!-- Files Section -->
+      <section id="section-files" class="dashboard-section">
+        <h1>File Manager</h1>
+        <p class="section-subtitle">Upload and process files</p>
+
+        <div class="settings-form">
+          <h3>Upload File</h3>
+          <form id="upload-form">
+            <div class="form-group">
+              <label for="file-input">Select File</label>
+              <input type="file" id="file-input" required />
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="file-public" /> Make Public
+              </label>
+            </div>
+            <button type="submit" class="btn-primary">Upload</button>
+          </form>
+          <div id="upload-message" class="form-message"></div>
+        </div>
+
+        <div class="settings-form" style="margin-top: 2rem;">
+          <h3>Your Files</h3>
+          <div id="file-list" class="file-list">
+            <p>Loading files...</p>
+          </div>
+        </div>
+        
+        <div class="settings-form" style="margin-top: 2rem; display: none;" id="process-file-container">
+          <h3>Process File (Command Injection)</h3>
+          <form id="process-form">
+             <input type="hidden" id="process-file-id" />
+             <p>Selected File: <span id="process-filename"></span></p>
+             <div class="form-group">
+               <label for="process-op">Operation</label>
+               <select id="process-op">
+                 <option value="info">Get Info (file)</option>
+                 <option value="compress">Compress (gzip)</option>
+                 <option value="hash">Calculate Hash (md5sum)</option>
+               </select>
+             </div>
+             <button type="submit" class="btn-primary">Execute Command</button>
+          </form>
+          <div id="process-output" class="code-block" style="display:none; margin-top: 1rem; background: #eee; padding: 1rem;"></div>
+        </div>
+      </section>
+
+
+      <!-- Sections conclude -->
+    </div>
+  </main>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

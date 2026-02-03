@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings | MicroSec</title>
+  <meta name="description" content="Manage your MicroSec account settings, profile information, security preferences, and application configuration." />
+  <link rel="stylesheet" href="css/simple-bw.css" />
+  <link rel="stylesheet" href="css/simple-bw-settings.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="dashboard-page">
+  
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="index.html" class="logo">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>MicroSec</span>
+      </a>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item" data-section="overview">
+        <i class="fa-solid fa-grip"></i>
+        <span>Overview</span>
+      </a>
+      <a href="dashboard.html#profile" class="nav-item" data-section="profile">
+        <i class="fa-solid fa-user"></i>
+        <span>Profile</span>
+      </a>
+      <a href="dashboard.html#services" class="nav-item" data-section="services">
+        <i class="fa-solid fa-cubes"></i>
+        <span>Services</span>
+      </a>
+      <a href="settings.html" class="nav-item active" data-section="settings">
+        <i class="fa-solid fa-gear"></i>
+        <span>Settings</span>
+      </a>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <button class="logout-btn" id="logout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="dashboard-main">
+    
+    <!-- Top Bar -->
+    <header class="dashboard-header">
+      <div class="page-title">
+        <i class="fa-solid fa-gear"></i>
+        <h2>Account Settings</h2>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="notification-btn"><i class="fa-solid fa-bell"></i></button>
+        <div class="user-menu" id="user-menu">
+          <div class="user-avatar" id="user-avatar">U</div>
+          <span id="header-username">User</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Settings Content -->
+    <div class="dashboard-content settings-content">
+      
+      <!-- Settings Navigation Tabs -->
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="profile-tab" id="profile-tab-btn">
+          <i class="fa-solid fa-user-circle"></i>
+          <span>Profile</span>
+        </button>
+        <button class="settings-tab" data-tab="security-tab" id="security-tab-btn">
+          <i class="fa-solid fa-shield-alt"></i>
+          <span>Security</span>
+        </button>
+        <button class="settings-tab" data-tab="preferences-tab" id="preferences-tab-btn">
+          <i class="fa-solid fa-sliders"></i>
+          <span>Preferences</span>
+        </button>
+      </div>
+
+      <!-- ===================== -->
+      <!-- Profile Tab Section -->
+      <!-- ===================== -->
+      <section id="profile-tab" class="settings-section active">
+        <div class="section-header-card">
+          <h1><i class="fa-solid fa-user-circle"></i> Profile Information</h1>
+          <p class="section-description">View and manage your account details</p>
+        </div>
+
+        <!-- Profile Card Display -->
+        <div class="profile-display-card" id="profile-display-card">
+          <div class="profile-loading" id="profile-loading">
+            <div class="spinner"></div>
+            <p>Loading profile...</p>
+          </div>
+          
+          <div class="profile-loaded" id="profile-loaded" style="display: none;">
+            <div class="profile-avatar-large" id="profile-avatar-large">U</div>
+            <div class="profile-details">
+              <div class="profile-main-info">
+                <h2 id="profile-display-username">Username</h2>
+                <span class="profile-badge"><i class="fa-solid fa-check-circle"></i> Verified</span>
+              </div>
+              <div class="profile-detail-row">
+                <i class="fa-solid fa-envelope"></i>
+                <span id="profile-display-email">user@example.com</span>
+              </div>
+              <div class="profile-detail-row">
+                <i class="fa-solid fa-calendar"></i>
+                <span id="profile-display-joined">Member since ...</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="profile-error" id="profile-error" style="display: none;">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            <p id="profile-error-message">Failed to load profile</p>
+            <button class="btn-secondary btn-sm" id="retry-profile-btn">
+              <i class="fa-solid fa-refresh"></i> Retry
+            </button>
+          </div>
+        </div>
+
+        <!-- Change Username Form -->
+        <div class="settings-form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon">
+              <i class="fa-solid fa-edit"></i>
+            </div>
+            <div class="form-card-title">
+              <h3>Change Username</h3>
+              <p>Update your display name across the platform</p>
+            </div>
+          </div>
+          
+          <form id="change-username-form" class="settings-form">
+            <div class="form-group">
+              <label for="new-username">New Username</label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-at"></i>
+                <input 
+                  type="text" 
+                  id="new-username" 
+                  name="username"
+                  placeholder="Enter your new username" 
+                  minlength="3"
+                  maxlength="30"
+                  required 
+                  autocomplete="username"
+                />
+              </div>
+              <span class="input-hint">3-30 characters, alphanumeric and underscores only</span>
+            </div>
+            
+            <div class="form-actions">
+              <button type="submit" class="btn-primary" id="submit-username-btn">
+                <i class="fa-solid fa-save"></i>
+                <span>Update Username</span>
+              </button>
+            </div>
+            
+            <div class="form-message" id="username-message"></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===================== -->
+      <!-- Security Tab Section -->
+      <!-- ===================== -->
+      <section id="security-tab" class="settings-section">
+        <div class="section-header-card">
+          <h1><i class="fa-solid fa-shield-alt"></i> Security Settings</h1>
+          <p class="section-description">Manage your account security and credentials</p>
+        </div>
+
+        <!-- Change Password Form -->
+        <div class="settings-form-card">
+          <div class="form-card-header">
+            <div class="form-card-icon security">
+              <i class="fa-solid fa-key"></i>
+            </div>
+            <div class="form-card-title">
+              <h3>Change Password</h3>
+              <p>Update your password to keep your account secure</p>
+            </div>
+          </div>
+          
+          <form id="change-password-form" class="settings-form">
+            <div class="form-group">
+              <label for="new-password">New Password</label>
+              <div class="input-with-icon password-input-wrapper">
+                <i class="fa-solid fa-lock"></i>
+                <input 
+                  type="password" 
+                  id="new-password" 
+                  name="password"
+                  placeholder="Enter your new password" 
+                  minlength="8"
+                  required 
+                  autocomplete="new-password"
+                />
+                <button type="button" class="toggle-password" data-target="new-password" aria-label="Toggle password visibility">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+              <span class="input-hint">Minimum 8 characters</span>
+            </div>
+
+            <div class="form-group">
+              <label for="confirm-password">Confirm Password</label>
+              <div class="input-with-icon password-input-wrapper">
+                <i class="fa-solid fa-lock-open"></i>
+                <input 
+                  type="password" 
+                  id="confirm-password" 
+                  name="confirmPassword"
+                  placeholder="Confirm your new password" 
+                  minlength="8"
+                  required 
+                  autocomplete="new-password"
+                />
+                <button type="button" class="toggle-password" data-target="confirm-password" aria-label="Toggle password visibility">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+              <span class="input-hint">Re-enter your password to confirm</span>
+            </div>
+
+            <!-- Password Strength Indicator -->
+            <div class="password-strength" id="password-strength">
+              <div class="strength-bar">
+                <div class="strength-fill" id="strength-fill"></div>
+              </div>
+              <span class="strength-text" id="strength-text">Enter a password</span>
+            </div>
+            
+            <div class="form-actions">
+              <button type="submit" class="btn-primary" id="submit-password-btn">
+                <i class="fa-solid fa-shield-alt"></i>
+                <span>Update Password</span>
+              </button>
+            </div>
+            
+            <div class="form-message" id="password-message"></div>
+          </form>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="security-notice-card">
+          <div class="notice-icon">
+            <i class="fa-solid fa-info-circle"></i>
+          </div>
+          <div class="notice-content">
+            <h4>Security Recommendations</h4>
+            <ul>
+              <li>Use a unique password you haven't used elsewhere</li>
+              <li>Include numbers, symbols, and mixed case letters</li>
+              <li>Avoid using personal information in your password</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== -->
+      <!-- Preferences Tab Section -->
+      <!-- ===================== -->
+      <section id="preferences-tab" class="settings-section">
+        <div class="section-header-card">
+          <h1><i class="fa-solid fa-sliders"></i> Preferences</h1>
+          <p class="section-description">Customize your application experience</p>
+        </div>
+
+        <!-- Appearance Settings -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <i class="fa-solid fa-moon"></i>
+            <h3>Appearance</h3>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Dark Mode</span>
+              <span class="setting-description">Use dark theme throughout the application</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="dark-mode-toggle" checked disabled />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <i class="fa-solid fa-bell"></i>
+            <h3>Notifications</h3>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Email Alerts</span>
+              <span class="setting-description">Receive important updates via email</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="email-alerts-toggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">Security Warnings</span>
+              <span class="setting-description">Get notified about security issues</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="security-warnings-toggle" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Reset Settings -->
+        <div class="settings-card danger-zone">
+          <div class="settings-card-header">
+            <i class="fa-solid fa-rotate-left"></i>
+            <h3>Reset Settings</h3>
+          </div>
+          <p class="danger-description">
+            Reset all your preferences to their default values. This action cannot be undone.
+          </p>
+          <button class="btn-danger" id="reset-settings-btn">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>Reset to Defaults</span>
+          </button>
+          <div class="form-message" id="reset-message"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <i class="fa-solid fa-exclamation-triangle modal-warning-icon"></i>
+        <h3 id="modal-title">Confirm Action</h3>
+      </div>
+      <div class="modal-body">
+        <p id="modal-message">Are you sure you want to proceed?</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="modal-cancel-btn">Cancel</button>
+        <button class="btn-danger" id="modal-confirm-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/settings.js"></script>
+</body>
+</html>

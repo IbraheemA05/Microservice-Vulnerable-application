@@ -1,0 +1,158 @@
+/* ======================
+    Auth Pages - Black & White Theme
+    ====================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Black & White Colors */
+  --bg-dark: #000000;
+  --bg-panel: #1a1a1a;
+  --primary: #ffffff;
+  --secondary: #ffffff;
+  --accent: #ffffff;
+  --success: #ffffff;
+  --text-main: #ffffff;
+  --text-muted: #888888;
+
+  /* Simplified Gradients */
+  --gradient-main: linear-gradient(135deg, #ffffff, #cccccc);
+  --gradient-glow: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1), transparent 70%);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(12px);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ======================
+    Auth Container
+    ====================== */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 420px;
+  padding: 3rem;
+  background: var(--bg-panel);
+  border: var(--glass-border);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: var(--glass-shadow);
+}
+
+.auth-box h2 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: var(--text-main);
+}
+
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.input-group input {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 1rem;
+  transition: var(--transition-fast);
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 1rem;
+  background: var(--gradient-main);
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  margin-top: 1rem;
+}
+
+.auth-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.auth-switch a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.form-feedback {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.form-feedback.error {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ======================
+    Responsive Design
+    ====================== */
+@media (max-width: 480px) {
+  .auth-box {
+    margin: 1rem;
+    padding: 2rem;
+  }
+}

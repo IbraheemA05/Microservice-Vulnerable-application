@@ -41,9 +41,9 @@ jobs:
         with:
           node-version: 22
 
-      #-----------------------------
-      # MOngo port
-      #-----------------------------
+      #------------------------------
+      # TRIGER FLY.IO
+      #------------------------------
 
       # ------------------------
       # SETUP ZAP
@@ -243,9 +243,13 @@ jobs:
           MONGO_URI: mongodb://mongo:27017
           MONGO_DB_NAME: microservices
 
+
       #------------------------------
       # DAST SCANNING
       #------------------------------
-      #- name: Run DAST Scan with OWASP ZAP
-      #  run: |
-       #   docker run -v $(pwd):/zap/wrk/:rw --network="host" owasp/zap2docker-stable zap-full-scan.py -t http://localhost:4000 -r scan-report.html
+      - name: OWASP ZAP BASELINE SCANNING
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{}}
+          token: ${{}}
+          fail_action: false

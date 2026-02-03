@@ -1,21 +1,36 @@
 services:
-
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "80:80"
+    networks:
+      - external-net
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:80/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
   mongo:
     image: mongo:7
-    container_name: auth-mongo
+    container_name: mongo
     restart: unless-stopped
     volumes:
       - mongo_data:/data/db
     ports:
-      - "27018:27017"   # optional host access
+      - "27018:27017" # optional host access
     networks:
       - internal-net
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"]
+      test: [ "CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 10
-
 
   auth-service:
     build: ./auth
@@ -31,7 +46,7 @@ services:
       mongo:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:3000/health" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -41,6 +56,8 @@ services:
     container_name: settings-service
     ports:
       - "4000:4000"
+    env_file:
+      - ./setting/.env
     networks:
       - internal-net
       - external-net
@@ -50,7 +67,49 @@ services:
       mongo:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:4000/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  notification-service:
+    build: ./notification
+    container_name: notification-service
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./notification/.env
+    networks:
+      - internal-net
+      - external-net
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:5000/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  upload-service:
+    build: ./upload
+    container_name: upload-service
+    ports:
+      - "6000:6000"
+    env_file:
+      - ./upload/.env
+    networks:
+      - internal-net
+      - external-net
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:6000/health" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -61,7 +120,6 @@ networks:
     internal: true
   external-net:
     driver: bridge
-
 
 volumes:
   mongo_data:
