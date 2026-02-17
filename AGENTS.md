@@ -5,208 +5,134 @@ This document provides essential information for agentic coding assistants worki
 ## Build, Lint, and Test Commands
 
 ### Development Commands
-- **Start all services**: `npm run dev` (runs both auth and setting services concurrently)
+- **Start all services**: `npm run dev` (runs `server`, `frontend`, `client`, `notification`, `upload` concurrently)
 - **Start auth service only**: `npm run server` (runs `npm run test --prefix auth`)
 - **Start setting service only**: `npm run client` (runs `npm run dev --prefix setting`)
+- **Start frontend**: `npm run frontend` (runs `live-server`)
 
-### Individual Service Commands
+### Individual Service Commands & Tests
+
+**Note on Testing**: This project currently **does not have an automated unit test suite** (no Jest/Mocha).
+- `npm run test` in `/auth` actually runs the server with `nodemon`, it is NOT a test runner.
+- **To run a single test**: You must currently verify changes manually or create a temporary script (e.g., using `fetch` or `axios`) to hit the endpoints.
+- **To lint**: No linter is configured. Follow the code style below strictly.
 
 #### Auth Service (`/auth`)
-- **Development**: `npm run test` (uses nodemon to watch authController.js)
-- **Production**: `npm run start` (runs node authController.js)
-- **Default port**: 3000
+- **Run (Dev)**: `npm run test` (watch mode)
+- **Run (Prod)**: `npm run start`
+- **Port**: 3000
 
 #### Setting Service (`/setting`)
-- **Development**: `npm run dev` (uses nodemon to watch userSetting.js)
-- **Production**: `npm run start` (runs node userSetting.js)
-- **Default port**: 4000
+- **Run (Dev)**: `npm run dev` (watch mode)
+- **Run (Prod)**: `npm run start`
+- **Port**: 4000
 
-### Database Operations
-- **Run migrations**: `node db/migrate.js` (executes MongoDB migrations from db/migrations/)
+#### Frontend (`/frontend`)
+- **Run**: `npm start` (uses `live-server`)
+- **Port**: 8080 (default)
 
-### Environment Setup
-Required environment variables (create `.env` file):
-- `MONGO_URI`: MongoDB connection string
-- `MONGO_DB_NAME`: Database name (defaults to "microservices")
-- `JWT_SECRET`: JWT signing secret
-- `NODE_ENV`: Environment (development/production)
-- `user`: Gmail address for password reset emails
-- `pass`: Gmail app password for password reset emails
-
-## Architecture Overview
-
-This is a Node.js microservice application with two main services:
-1. **Auth Service** (`/auth`): Handles user authentication, registration, login, password reset
-2. **Setting Service** (`/setting`): Manages user settings, preferences, profile management
-
-Both services use Express.js with MongoDB (via Mongoose) and share common authentication patterns.
+### Database
+- **Migrations**: `node db/migrate.js`
+- **Connection**: Requires `MONGO_URI` in `.env`.
 
 ## Code Style Guidelines
 
 ### General Patterns
-- **Language**: JavaScript (CommonJS modules - `require()`/`module.exports`)
-- **Runtime**: Node.js (>=18)
-- **Database**: MongoDB with Mongoose ODM
+- **Language**: JavaScript (Node.js >=18)
+- **Module System**: CommonJS (`require`/`module.exports`)
+- **Database**: MongoDB with Mongoose
 - **Framework**: Express.js
-- **Authentication**: JWT with httpOnly cookies
 
-### Import and Export Conventions
+### Formatting & Syntax
+- **Indentation**: 2 spaces.
+- **Semicolons**: Yes, always.
+- **Quotes**: Double quotes (`"`) preferred.
+- **Files**: `camelCase.js` (e.g., `authController.js`).
+- **Variables**: `camelCase`.
+- **Constants**: `UPPER_SNAKE_CASE`.
+
+### Imports
 ```javascript
-// Use CommonJS require syntax
 require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
-
-// Export with module.exports
-module.exports = {
-  // export object
-};
+// Group imports: Built-in -> Third-party -> Local
 ```
 
-### File Organization
-- Service entry points use descriptive names (`authController.js`, `userSetting.js`)
-- Database migrations in `/db/migrations/` with numeric prefixes (`001-*.js`)
-- Shared configuration in `defaultSettings.js`
-- Each service has its own `package.json`
-
-### Express App Structure
-```javascript
-// Standard startup sequence
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware setup
-app.use(express.json());
-app.use(cookieParser());
-app.use(cors({
-  origin: ['http://localhost', 'http://localhost:80', 'http://frontend'],
-  credentials: true
-}));
-
-// Database connection
-mongoose.connect(mongoURI)
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((error) => console.error("Error connecting to MongoDB:", error));
-
-// Routes
-// ... route definitions
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-```
-
-### Mongoose Schema Patterns
-```javascript
-const userSchema = new mongoose.Schema({
-  userId: { type: String, required: true, unique: true },
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-}, { versionKey: false, timestamps: true });
-
-const User = mongoose.model("User", userSchema);
-```
-
-### Authentication Middleware
-```javascript
-function authenticateToken(req, res, next) {
-  const token = req.cookies.token;
-  
-  if (token == null) return res.sendStatus(401);
-  
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-}
-```
-
-### Error Handling Patterns
-- Use try-catch blocks for async operations
-- Return appropriate HTTP status codes with JSON responses
-- Log errors to console for debugging
-- Consistent error response format: `{ message: "Error description" }`
-
-### Route Handler Structure
-```javascript
-app.post("/endpoint", async (req, res) => {
+### Error Handling
+- Use `try/catch` for async route handlers.
+- Return JSON errors with 4xx/5xx status.
+- **Pattern**:
+  ```javascript
   try {
-    // Input validation
-    if (!req.body || !requiredField) {
-      return res.status(400).json({ message: "Bad Request - Missing required fields" });
-    }
-    
-    // Business logic
-    const result = await someOperation();
-    
-    // Success response
-    res.status(200).json({ message: "Success", data: result });
+    // logic
   } catch (error) {
-    console.error("Operation error:", error);
+    console.error("Error context:", error);
     res.status(500).json({ message: "Server error" });
   }
-});
-```
+  ```
 
-### CORS Configuration
-Always use this CORS setup for cross-origin requests:
+### Mongoose Models
+- Use `PascalCase` for models.
+- Disable version key, enable timestamps.
 ```javascript
-app.use(cors({
-  origin: ['http://localhost', 'http://localhost:80', 'http://frontend'],
-  credentials: true
-}));
+const userSchema = new mongoose.Schema({
+  // fields
+}, { versionKey: false, timestamps: true });
 ```
 
-### Health Endpoints
-Each service should include a health check endpoint:
-```javascript
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
-});
-```
+### Security & Vulnerabilities
+**IMPORTANT**: This is a *vulnerable-by-design* application.
+- Do **NOT** fix vulnerabilities labeled with `// VULNERABILITY` unless explicitly asked.
+- When creating new features, maintain the existing patterns.
+- If asked to fix, apply standard mitigations (bcrypt, input validation, etc.).
 
-### Security Considerations
-- JWT tokens stored in httpOnly cookies
-- Input validation on all routes
-- Password comparison (note: current code stores plaintext passwords - vulnerable by design for this security training application)
-- CORS properly configured
-- Environment variables for sensitive data
+## Environment Variables (.env)
+- `MONGO_URI`: Connection string.
+- `JWT_SECRET`: Secret for tokens.
+- `NODE_ENV`: `development` or `production`.
+- `PORT`: Service port (3000/4000).
 
-### Database Migration Format
-Migrations use CommonJS exports:
-```javascript
-// export async function up(db) {
-//   await db.createCollection("name", {
-//     validator: { /* schema validation */ }
-//   });
-//   await db.collection("name").createIndexes([/* indexes */]);
-// }
-```
+## Service Overview & API Endpoints
 
-### Naming Conventions
-- **Files**: camelCase for JavaScript files (`authController.js`, `userSetting.js`)
-- **Variables**: camelCase (`userId`, `userName`)
-- **Endpoints**: kebab-case for URLs (`/user/change-name`)
-- **Constants**: UPPER_SNAKE_CASE for environment variables (`MONGO_URI`, `JWT_SECRET`)
-- **Models**: PascalCase for Mongoose models (`User`, `Settings`)
+### Auth Service (`/auth`) - Port 3000
+Handles registration, login, and password reset.
+- `POST /signup`: Register a new user.
+- `POST /login`: Authenticate user (returns JWT in httpOnly cookie).
+- `POST /password-reset/request`: Request a reset token.
+- `POST /reset-password`: Reset password using token or email.
+- `GET /health`: Health check.
 
-### Console Output
-- Use console.log for success/connection messages
-- Use console.error for errors
-- Include meaningful context in log messages
-- Audit important security operations with `[AUDIT]` prefix
+### Setting Service (`/setting`) - Port 4000
+Manages user profiles and settings. Requires `authenticateToken` middleware.
+- `GET /me`: Get current user profile.
+- `PUT /user/change-name`: Update username/display name.
+- `PUT /user/change-password`: Change password (authenticated).
+- `POST /settings/reset`: Reset user settings.
 
-### Response Format Standards
-- Success: `{ message: "Description", data?: {} }`
-- Error: `{ message: "Error description" }`
-- Status codes: 200 (success), 201 (created), 400 (bad request), 401 (unauthorized), 403 (forbidden), 404 (not found), 500 (server error)
+### Notification Service (`/notification`)
+Handles email, SMS, and push notifications.
+- `POST /send/email`: Send generic email.
+- `POST /send/sms/xml`: Send SMS (XXE vulnerable endpoint).
+- `POST /template/create` & `/template/send`: Manage SSTI vulnerable templates.
+- `POST /webhook/trigger`: Trigger webhooks (SSRF vulnerable).
+- `GET /notifications/:userId`: Retrieve user notifications.
 
-This application is designed as a vulnerable microservice for security training purposes. When making changes, maintain the intended vulnerable patterns for educational value while following the established code structure.
+### Upload Service (`/upload`)
+Handles file uploads and processing.
+- `POST /upload`: Upload file (unrestricted file upload).
+- `POST /process/:fileId`: Process uploaded file (Command Injection).
+- `POST /extract`: Extract archive (Zip Slip).
+- `GET /files`: List files.
+- `GET /public/:filename`: Access public files.
+
+## Testing Strategy for Agents
+Since there are no automated tests:
+1.  **Analyze**: Read the code to understand the expected behavior.
+2.  **Verify**: Create a temporary script (e.g., `temp-test.js`) using `axios` to send requests to the running service.
+    ```javascript
+    const axios = require('axios');
+    axios.post('http://localhost:3000/login', { ... })
+      .then(res => console.log(res.data))
+      .catch(err => console.error(err.response.data));
+    ```
+3.  **Cleanup**: Delete temporary test scripts after verification.
