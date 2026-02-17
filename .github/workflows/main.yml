@@ -41,15 +41,6 @@ jobs:
         with:
           node-version: 22
 
-      #------------------------------
-      # TRIGER FLY.IO
-      #------------------------------
-
-      # ------------------------
-      # SETUP ZAP
-      # ------------------------
-      #- name: Setup OWASP ZAP
-       # uses: owasp/zap2docker-stable@master
 
       # ------------------------
       # SETUP SNYK CLI
@@ -96,6 +87,15 @@ jobs:
           cd setting && snyk test --severity-threshold=high || echo "Snyk scan found issues in settings"
           cd ..
 
+          cd upload && snyk test --severity-threshold=high || echo "Snyk scan found issues in upload"
+          cd ..
+
+          cd frontend && snyk test --severity-threshold=high || echo "Snyk scan found issues in frontend"
+          cd ..
+
+          cd notification && snyk test --severity-threshold=high || echo "Snyk scan found issues in notification"
+          cd ..
+
       - name: SCA Monitoring
         env:
           SNYK_ORG: ${{ secrets.SNYK_ORG }}
@@ -124,6 +124,11 @@ jobs:
         run: |
           docker build -t auth-service:${{ github.sha }} ./auth
           docker build -t settings-service:${{ github.sha }} ./setting
+          docker build -t frontend-service:${{ github.sha }} ./frontend
+          docker build -t upload-service:${{ github.sha }} ./upload
+          docker build -t notification-service:${{ github.sha }} ./notification
+
+
 
       # ------------------------
       # CONTAINER SCANNING
@@ -136,6 +141,12 @@ jobs:
 
           snyk container test settings-service:${{ github.sha }} \
           --severity-threshold=high || echo "High impact vulnerability found in settings-service."
+
+          snyk container test frontend-service:${{ github.sha }} \
+          --severity-threshold=high || echo "High impact vulnerability found in frontend-service."
+
+          snyk container test upload-service:${{ github.sha }} \
+          --severity-threshold=high || echo "High impact vulnerability found in upload-service."
 
       - name: Container Monitoring
         env:
@@ -168,6 +179,12 @@ jobs:
           syft settings-service:${{ github.sha }} \
             -o cyclonedx-json=settings-service.sbom.json
 
+          syft frontend-service:${{ github.sha }} \
+            -o cyclonedx-json=frontend-service.sbom.json
+
+          syft upload-service:${{ github.sha }} \
+            -o cyclonedx-json=upload-service.sbom.json
+
       #------------------------
       # UPLOAD SBOM TO SNYK
       #------------------------
@@ -182,6 +199,14 @@ jobs:
           --file=settings-service.sbom.json \
           --project-name=settings-service
 
+          snyk sbom test \
+          --file=frontend-service.sbom.json \
+          --project-name=frontend-service
+
+          snyk sbom test \
+          --file=upload-service.sbom.json \
+          --project-name=upload-service
+
       - name: Upload SBOM artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -190,6 +215,8 @@ jobs:
           path: |
             auth-service.sbom.json
             settings-service.sbom.json
+            frontend-service.sbom.json
+            upload-service.sbom.json
 
       #-------------------------
       # COSIGN AND SIGSTORE
@@ -221,8 +248,18 @@ jobs:
             --format='{{index .RepoDigests 0}}' \
             docker.io/${{ secrets.DOCKER_USERNAME }}/settings-service:${{ github.sha }})
 
+          FRONTEND_DIGEST=$(docker inspect \
+            --format='{{index .RepoDigests 0}}' \
+            docker.io/${{ secrets.DOCKER_USERNAME }}/frontend-service:${{ github.sha }})
+
+          UPLOAD_DIGEST=$(docker inspect \
+            --format='{{index .RepoDigests 0}}' \
+            docker.io/${{ secrets.DOCKER_USERNAME }}/upload-service:${{ github.sha }})
+
           echo "AUTH_DIGEST=$AUTH_DIGEST" >> $GITHUB_ENV #Way github pass data to next step
           echo "SETTINGS_DIGEST=$SETTINGS_DIGEST" >> $GITHUB_ENV
+          echo "FRONTEND_DIGEST=$FRONTEND_DIGEST" >> $GITHUB_ENV
+          echo "UPLOAD_DIGEST=$UPLOAD_DIGEST" >> $GITHUB_ENV
 
       - name: Sign Image with consign
         env:
@@ -230,11 +267,15 @@ jobs:
         run: |
           cosign sign $AUTH_DIGEST
           cosign sign $SETTINGS_DIGEST
+          cosign sign $FRONTEND_DIGEST
+          cosign sign $UPLOAD_DIGEST
 
       - name: Debug digests
         run: |
           echo "Auth digest: $AUTH_DIGEST"
           echo "Settings digest: $SETTINGS_DIGEST"
+          echo "Frontend digest: $FRONTEND_DIGEST"
+          echo "Upload digest: $UPLOAD_DIGEST"
 
       - name: Run DB Migrations
         run: |
@@ -247,9 +288,9 @@ jobs:
       #------------------------------
       # DAST SCANNING
       #------------------------------
-      - name: OWASP ZAP BASELINE SCANNING
-        uses: zaproxy/action-baseline@v0.14.0
-        with:
-          target: ${{}}
-          token: ${{}}
-          fail_action: false
+      # - name: OWASP ZAP BASELINE SCANNING
+      #   uses: zaproxy/action-baseline@v0.14.0
+      #   with:
+      #     target: ${{}}
+      #     token: ${{}}
+      #     fail_action: false
