@@ -1,4 +1,4 @@
-name: Microservices-Vulnerable CI/CD Pipelin
+name: Microservices-Vulnerable CI/CD Pipeline
 
 on:
   push:
