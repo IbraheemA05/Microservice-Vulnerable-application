@@ -82,19 +82,39 @@ jobs:
         run: |
           snyk auth $SNYK_TOKEN
 
-          cd auth && snyk test --severity-threshold=high || echo "Snyk scan found issues in auth"
+          cd auth
+          snyk test \
+            --severity-threshold=high \
+            --json \
+            > ../snyk-auth-sca.json 2>&1 || echo "Snyk found issues in auth"
           cd ..
 
-          cd setting && snyk test --severity-threshold=high || echo "Snyk scan found issues in settings"
+          cd setting
+          snyk test \
+            --severity-threshold=high \
+            --json \
+            > ../snyk-setting-sca.json 2>&1 || echo "Snyk found issues in setting"
           cd ..
 
-          cd upload && snyk test --severity-threshold=high || echo "Snyk scan found issues in upload"
+          cd upload
+          snyk test \
+            --severity-threshold=high \
+            --json \
+            > ../snyk-upload-sca.json 2>&1 || echo "Snyk found issues in upload"
           cd ..
 
-          cd frontend && snyk test --severity-threshold=high || echo "Snyk scan found issues in frontend"
+          cd frontend
+          snyk test \
+            --severity-threshold=high \
+            --json \
+            > ../snyk-frontend-sca.json 2>&1 || echo "Snyk found issues in frontend"
           cd ..
 
-          cd notification && snyk test --severity-threshold=high || echo "Snyk scan found issues in notification"
+          cd notification
+          snyk test \
+            --severity-threshold=high \
+            --json \
+            > ../snyk-notification-sca.json 2>&1 || echo "Snyk found issues in notification"
           cd ..
 
       - name: SCA Monitoring
@@ -108,7 +128,41 @@ jobs:
           cd setting
           snyk monitor --org=$SNYK_ORG --project-name=setting-service
           cd ..
+      
 
+      # ------------------------
+      # Parse SCA Results
+      # ------------------------
+      - name: Parse Snyk SCA Results
+        id: parse_sca
+        if: always()
+        run: |
+          parse_service() {
+            local SERVICE=$1
+            local FILE="snyk-${SERVICE}-sca.json"
+
+            # Check if file exists and is valid JSON
+            if [ ! -f "$FILE" ] || ! jq empty "$FILE" 2>/dev/null; then
+              echo "${SERVICE}_critical=N/A" >> $GITHUB_OUTPUT
+              echo "${SERVICE}_high=N/A"     >> $GITHUB_OUTPUT
+              echo "${SERVICE}_total=N/A"    >> $GITHUB_OUTPUT
+              return
+            fi
+
+            CRITICAL=$(jq '[.vulnerabilities[]? | select(.severity == "critical")] | length' "$FILE" 2>/dev/null || echo 0)
+            HIGH=$(jq     '[.vulnerabilities[]? | select(.severity == "high")]     | length' "$FILE" 2>/dev/null || echo 0)
+            TOTAL=$(jq    '.uniqueCount // (.vulnerabilities | length)'            "$FILE" 2>/dev/null || echo 0)
+
+            echo "${SERVICE}_critical=$CRITICAL" >> $GITHUB_OUTPUT
+            echo "${SERVICE}_high=$HIGH"         >> $GITHUB_OUTPUT
+            echo "${SERVICE}_total=$TOTAL"       >> $GITHUB_OUTPUT
+          }
+
+          parse_service "auth"
+          parse_service "setting"
+          parse_service "upload"
+          parse_service "frontend"
+          parse_service "notification"
       # ------------------------
       # LOGIN TO DOCKER
       # ------------------------
@@ -296,26 +350,90 @@ jobs:
       #     token: ${{}}
       #     fail_action: false
       
+      
+    #-------------------------------
+    # JOB 2 - Telegram Configuration
+    #-------------------------------
+    telegram:
+      name: Telegram Notification
+      runs-on: ubuntu-latest
+      needs: [build, test, scan]
 
-      #-------------------------------
-      # Telegram Configuration
-      #-------------------------------
+      permissions:
+        contents: read
+        security-events: write
+        id-token: write
 
-      - name: Send Telegram Notification
-        if: always()  # runs even on failure
-        run: |
-          STATUS="${{ job.status }}"
-          REPO="${{ github.repository }}"
-          RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
+      steps:
+        #--------------------------
+        # Telegram SBOM 
+        #--------------------------
+        - name: Send Telegram Notification
+          if: always()  # runs even on failure
+          run: |
+            STATUS="${{ job.status }}"
+            REPO="${{ github.repository }}"
+            RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
     
-          MESSAGE="*CI/CD Report* 🚀
-          Repo: $REPO
-          Branch: ${{ github.ref_name }}
-          Status: $STATUS
-          [View Run]($RUN_URL)"
+            MESSAGE="*CI/CD Report* 🚀
+            Repo: $REPO
+            Branch: ${{ github.ref_name }}
+            Status: $STATUS
+            [View Run]($RUN_URL)"
 
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d text="$MESSAGE" \
-          -d parse_mode="Markdown"
+           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="$MESSAGE" \
+            -d parse_mode="Markdown"
 
+      #-----------------------------
+      # COSIGN REPORT
+      #-----------------------------
+      steps:
+      # ── Download report files from scan job ───────────────────────────────
+      - name: Download scan artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: security-reports-${{ github.sha }}
+ 
+      # ── 1. Send raw SCA JSON files per service ────────────────────────────
+      - name: Telegram — Send Auth SCA Report
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -F document=@"snyk-auth-sca.json" \
+            -F caption="📦 *SCA Raw Report — Auth Service*" \
+            -F parse_mode="Markdown"
+ 
+      - name: Telegram — Send Setting SCA Report
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -F document=@"snyk-setting-sca.json" \
+            -F caption="📦 *SCA Raw Report — Setting Service*" \
+            -F parse_mode="Markdown"
+ 
+      - name: Telegram — Send Upload SCA Report
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -F document=@"snyk-upload-sca.json" \
+            -F caption="📦 *SCA Raw Report — Upload Service*" \
+            -F parse_mode="Markdown"
+ 
+      - name: Telegram — Send Frontend SCA Report
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -F document=@"snyk-frontend-sca.json" \
+            -F caption="📦 *SCA Raw Report — Frontend*" \
+            -F parse_mode="Markdown"
+ 
+      - name: Telegram — Send Notification SCA Report
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
+            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -F document=@"snyk-notification-sca.json" \
+            -F caption="📦 *SCA Raw Report — Notification Service*" \
+            -F parse_mode="Markdown"
+          
