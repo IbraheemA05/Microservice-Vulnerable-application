@@ -152,11 +152,12 @@ jobs:
         with:
           name: snyk-report-${{ github.sha }}
           path: |
-            snyk-auth-sca.json
-            snyk-setting-sca.json
-            snyk-upload-sca.json
-            snyk-frontend-sca.json
-            snyk-notification-sca.json
+              snyk-auth-sca.json
+              snyk-setting-sca.json
+              snyk-upload-sca.json
+              snyk-frontend-sca.json
+              snyk-notification-sca.json
+          retention-days: 1
 
       # ------------------------
       # BUILD IMAGES
@@ -376,59 +377,34 @@ jobs:
                -d parse_mode="Markdown"
 
       #-----------------------------
-      # COSIGN REPORT
+      # SNYK SCANNING REPORT 
       #-----------------------------
-      # ── Download report files from scan job ───────────────────────────────
+      # ── Download report files from scan job ───────────
       - name: Download scan artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: snyk-report-${{ github.sha }}
- 
-      # ── 1. Send raw SCA JSON files per service ────────────────────────────
-      - name: Telegram — Send Auth SCA Report
+        if: always()
         run: |
-          REPORT_FILE="{{ env.SNYK_AUTH_SCA_JSON_FILE }}"
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Download the artifact bundle into a subfolder
+          # (if this is a separate job, use actions/download-artifact@v4 instead)
 
-          if [ ! -f "$REPORT_FILE" ]; then
-            echo "Report file not found: $REPORT_FILE"
-            exit 1
-          fi
+          for FILE in \
+             snyk-auth-sca.json \
+             snyk-setting-sca.json \
+             snyk-upload-sca.json \
+             snyk-frontend-sca.json \
+             snyk-notification-sca.json
+          do
+            if [ -f "$FILE" ]; then
+              echo "Sending $FILE..."
+              curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
+               -F chat_id="${TELEGRAM_CHAT_ID}" \
+               -F document=@"${FILE}" \
+               -F caption="🔍 SCA Report: ${FILE} — $(date -u '+%Y-%m-%d %H:%M UTC')"
 
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"$REPORT_FILE" \
-            -F caption="📦 *SCA Raw Report — ${{ github.repository }}  @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
-            -F parse_mode="Markdown"\
+            rm -f "$FILE"
+            echo "$FILE sent and deleted."
+           else
+             echo "Skipping $FILE — not found."
+           fi
+          done
  
-      - name: Telegram — Send Setting SCA Report
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"snyk-setting-sca.json" \
-            -F caption="📦 *SCA Raw Report — ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
-            -F parse_mode="Markdown"
- 
-      - name: Telegram — Send Upload SCA Report
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"snyk-upload-sca.json" \
-            -F caption="📦 *SCA Raw Report — Upload Service - ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
-            -F parse_mode="Markdown"
- 
-      - name: Telegram — Send Frontend SCA Report
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"snyk-frontend-sca.json" \
-            -F caption="📦 *SCA Raw Report — Frontend - ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
-            -F parse_mode="Markdown"
- 
-      - name: Telegram — Send Notification SCA Report
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"snyk-notification-sca.json" \
-            -F caption="📦 *SCA Raw Report — Notification Service - ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
-            -F parse_mode="Markdown"
-          
