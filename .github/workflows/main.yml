@@ -380,31 +380,33 @@ jobs:
       # SNYK SCANNING REPORT 
       #-----------------------------
       # ── Download report files from scan job ───────────
-      - name: Download scan artifacts
-        if: always()
-        run: |
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          # Download the artifact bundle into a subfolder
-          # (if this is a separate job, use actions/download-artifact@v4 instead)
+      - name: Download SCA reports
+        uses: actions/download-artifact@v4
+        with:
+          name: snyk-report-${{ github.sha }}
+          path: .
 
+      # ── Send SCA reports to Telegram ───────────
+      - name: Send SCA reports to Telegram
+        run: |
           for FILE in \
-             snyk-auth-sca.json \
-             snyk-setting-sca.json \
-             snyk-upload-sca.json \
-             snyk-frontend-sca.json \
-             snyk-notification-sca.json
+            snyk-auth-sca.json \
+            snyk-setting-sca.json \
+            snyk-upload-sca.json \
+            snyk-frontend-sca.json \
+            snyk-notification-sca.json
           do
             if [ -f "$FILE" ]; then
               echo "Sending $FILE..."
-              curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
-               -F chat_id="${TELEGRAM_CHAT_ID}" \
-               -F document=@"${FILE}" \
-               -F caption="🔍 SCA Report: ${FILE} — $(date -u '+%Y-%m-%d %H:%M UTC')"
+              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
+                -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+                -F document=@"${FILE}" \
+                -F caption="🔍 SCA Report: ${FILE} — $(date -u '+%Y-%m-%d %H:%M UTC')"
 
-            rm -f "$FILE"
-            echo "$FILE sent and deleted."
-           else
-             echo "Skipping $FILE — not found."
-           fi
+              rm -f "$FILE"
+              echo "$FILE sent and deleted."
+            else
+              echo "Skipping $FILE — not found."
+            fi
           done
  
