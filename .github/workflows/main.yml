@@ -78,8 +78,47 @@ jobs:
       - name: Run Snyk SAST (Auth & Settings)
         continue-on-error: true #This is use to ensure the build completes even if there are issues
         run: |
-          cd auth && snyk code test --severity-threshold=high
-          cd ../setting && snyk code test --severity-threshold=high || echo "Snyk scan found issues in setting"
+          cd auth && snyk code test \
+          --json \
+          > ../snyk-auth-sast.json 2>&1 || echo "Snyk scan found issues in auth"
+          echo "SNYK_AUTH_SAST_JSON_FILE=snyk-auth-sast.json" >> $GITHUB_ENV
+
+          cd ../setting && snyk code test \
+          --json \
+          > ../snyk-setting-sast.json 2>&1 || echo "Snyk scan found issues in setting"
+          echo "SNYK_SETTING_SAST_JSON_FILE=snyk-setting-sast.json" >> $GITHUB_ENV
+          
+          cd ../upload && snyk code test \
+          --json \
+          > ../snyk-upload-sast.json 2>&1 || echo "Snyk scan found issues in upload"
+          echo "SNYK_UPLOAD_SAST_JSON_FILE=snyk-upload-sast.json" >> $GITHUB_ENV
+          
+          cd ../frontend && snyk code test \
+          --json \
+          > ../snyk-frontend-sast.json 2>&1 || echo "Snyk scan found issues in frontend"
+          echo "SNYK_FRONTEND_SAST_JSON_FILE=snyk-frontend-sast.json" >> $GITHUB_ENV
+          
+          cd ../notification && snyk code test \
+          --json \
+          > ../snyk-notification-sast.json 2>&1 || echo "Snyk scan found issues in notification"
+          echo "SNYK_NOTIFICATION_SAST_JSON_FILE=snyk-notification-sast.json" >> $GITHUB_ENV
+
+      #------------------------
+      # Upload SAST Report
+      #------------------------
+
+      - name: Upload SAST Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-sast-report-${{ github.sha }}
+          path: |
+             snyk-auth-sast.json
+             snyk-setting-sast.json
+             snyk-frontend-sast.json
+             snyk-upload-sast.json
+             snyk-notification-sast.json
+          retention-days: 1
+
 
       # ------------------------
       # SCA (Dependency Scan)
@@ -144,7 +183,7 @@ jobs:
           cd ..
           
       #------------------------
-      # UPload Report
+      # UPload Report SCA
       #------------------------
 
       - name: Upload Report
@@ -152,11 +191,11 @@ jobs:
         with:
           name: snyk-report-${{ github.sha }}
           path: |
-              snyk-auth-sca.json
-              snyk-setting-sca.json
-              snyk-upload-sca.json
-              snyk-frontend-sca.json
-              snyk-notification-sca.json
+             snyk-auth-sca.json
+             snyk-setting-sca.json
+             snyk-frontend-sca.json
+             snyk-upload-sca.json
+             snyk-notification-sca.json
           retention-days: 1
 
       # ------------------------
@@ -179,16 +218,32 @@ jobs:
         continue-on-error: true #This is use to ensure the build completes even if there are issues
         run: |
           snyk container test auth-service:${{ github.sha }} \
-          --severity-threshold=high || echo "High impact vulnerability found in auth-service."
+          --severity-threshold=high \
+          --json \
+          > ../snyk-auth-container.json  || echo "High impact vulnerability found in auth-service."
+          cd ..
+          echo "SNYK_AUTH_CONTAINER_JSON_FILE=snyk-auth-container.json" >> $GITHUB_ENV
 
           snyk container test settings-service:${{ github.sha }} \
-          --severity-threshold=high || echo "High impact vulnerability found in settings-service."
+          --severity-threshold=high \
+          --json \
+          > ../snyk-settings-container.json  || echo "High impact vulnerability found in settings-service."
+          cd ..
+          echo "SNYK_SETTINGS_CONTAINER_JSON_FILE=snyk-settings-container.json" >> $GITHUB_ENV
 
           snyk container test frontend-service:${{ github.sha }} \
-          --severity-threshold=high || echo "High impact vulnerability found in frontend-service."
+          --severity-threshold=high 
+          --json \
+          > ../snyk-frontend-container.json  || echo "High impact vulnerability found in frontend-service."
+          cd ..
+          echo "SNYK_FRONTEND_CONTAINER_JSON_FILE=snyk-frontend-container.json" >> $GITHUB_ENV
 
           snyk container test upload-service:${{ github.sha }} \
-          --severity-threshold=high || echo "High impact vulnerability found in upload-service."
+          --severity-threshold=high 
+          --json \
+          > ../snyk-upload-container.json  || echo "High impact vulnerability found in upload-service."
+          cd ..
+          echo "SNYK_UPLOAD_CONTAINER_JSON_FILE=snyk-upload-container.json" >> $GITHUB_ENV
 
       - name: Container Monitoring
         env:
@@ -201,7 +256,21 @@ jobs:
           snyk container monitor settings-service:${{ github.sha }} \
           --org=$SNYK_ORG \
           --project-name=settings-service-image
+          
+      #--------------------------
+      # UPLOADING Container SCanning
+      #--------------------------
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snyk-container-report-${{ github.sha }}
+          path: |
+            snyk-auth-container.json
+            snyk-settings-container.json
+            snyk-frontend-container.json
+            snyk-upload-container.json
+          retention-days: 1
 
+    
       # ------------------------
       # MONITOR (DASHBOARD)
       # ------------------------
@@ -377,7 +446,7 @@ jobs:
                -d parse_mode="Markdown"
 
       #-----------------------------
-      # SNYK SCANNING REPORT 
+      # SCA SCANNING REPORT
       #-----------------------------
       # ── Download report files from scan job ───────────
       - name: Download SCA reports
@@ -399,20 +468,8 @@ jobs:
             if [ -f "$FILE" ]; then
               SERVICE=$(basename $FILE .json)   # e.g. snyk-auth-sca
 
-              # Parse a human-readable summary from the JSON
-              SUMMARY=$(jq -r '
-                "🔍 SCA Report: " + $service + "\n" +
-                "📅 " + (now | strftime("%Y-%m-%d %H:%M UTC")) + "\n\n" +
-                "🚨 Critical : " + ([ (.vulnerabilities // [])[] | select(.severity == "critical")] | length | tostring) + "\n" +
-                "🔴 High     : " + ([ (.vulnerabilities // [])[] | select(.severity == "high")]     | length | tostring) + "\n" +
-                "🟡 Medium   : " + ([ (.vulnerabilities // [])[] | select(.severity == "medium")]   | length | tostring) + "\n" +
-                "🟢 Low      : " + ([ (.vulnerabilities // [])[] | select(.severity == "low")]      | length | tostring) + "\n\n" +
-                "Top Vulns:\n" +
-                ([ (.vulnerabilities // [])[] | select(.severity == "critical" or .severity == "high") ] 
-                  | .[:5]   # limit to top 5
-                  | map("• " + .title + " (" + .severity + ") — " + .packageName + "@" + .version)
-                  | join("\n"))
-              ' --arg service "$SERVICE" "$FILE")
+              # Parse a human-readable summary from JSON
+              SUMMARY=$(jq -r '. as $scan | ($scan.vulnerabilities // []) as $vulns | "🔍 SCA Report: " + $service + "\n📦 Project: " + ($scan.projectName // "unknown") + "\n📅 " + (now | strftime("%Y-%m-%d %H:%M UTC")) + "\n📊 Total: " + ($scan.uniqueCount // ($vulns | length)) + "\n\n🚨 Critical: " + ([$vulns[] | select(.severity == "critical")] | length | tostring) + "\n🔴 High: " + ([$vulns[] | select(.severity == "high")] | length | tostring) + "\n🟡 Medium: " + ([$vulns[] | select(.severity == "medium")] | length | tostring) + "\n🟢 Low: " + ([$vulns[] | select(.severity == "low")] | length | tostring) + "\n\n" + (if ($vulns | length) == 0 then "✅ No vulnerabilities found" else "Top Vulns:\n" + ([$vulns[] | select(.severity == "critical" or .severity == "high")] | .[:5] | map("• " + .title + "\n  📦 " + .packageName + "@" + .version + "\n  🔗 " + ((.from // []) | join(" → ")) + "\n  ✅ Fix: upgrade to " + (.fixedIn[0] // "N/A") + "\n  🆔 " + ((.identifiers.CVE // [])[0] // .id // "N/A")) | join("\n\n")) end)' --arg service "$SERVICE" "$FILE")
 
               # Send summary as a text message
               curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
@@ -431,3 +488,137 @@ jobs:
               echo "Skipping $FILE — not found."
             fi
           done
+
+      #-----------------------------------------
+      # CONTAINER SCANNING REPORT
+      #-----------------------------------------
+      # Downloading the report
+      - name: Downloading Container Report
+        uses: actions/download-artifact@v4
+        with:
+          name: snyk-container-report-${{ github.sha }}
+          path: .
+
+      # ── Send Container reports to Telegram ───────────
+      - name: Send Container reports to Telegram
+        run: |
+          for FILE in \
+            snyk-auth-container.json \
+            snyk-setting-container.json \
+            snyk-upload-container.json \
+            snyk-frontend-container.json \
+            snyk-notification-container.json
+          do
+            if [ -f "$FILE" ]; then
+              SERVICE=$(basename $FILE .json)   # e.g. snyk-auth-container
+
+              # Parse a human-readable summary from JSON
+              SUMMARY=$(jq -r '. as $scan | ($scan.vulnerabilities // []) as $vulns | "🔍 Container Report: " + $service + "\n📦 Image: " + ($scan.imageName // "unknown") + "\n📅 " + (now | strftime("%Y-%m-%d %H:%M UTC")) + "\n📊 Total: " + ($scan.uniqueCount // ($vulns | length)) + "\n\n🚨 Critical: " + ([$vulns[] | select(.severity == "critical")] | length | tostring) + "\n🔴 High: " + ([$vulns[] | select(.severity == "high")] | length | tostring) + "\n🟡 Medium: " + ([$vulns[] | select(.severity == "medium")] | length | tostring) + "\n🟢 Low: " + ([$vulns[] | select(.severity == "low")] | length | tostring) + "\n\n" + (if ($vulns | length) == 0 then "✅ No vulnerabilities found" else "Top Vulns:\n" + ([$vulns[] | select(.severity == "critical" or .severity == "high")] | .[:5] | map("• " + .title + "\n  📦 " + .packageName + "@" + .version + "\n  🔗 " + ((.from // []) | join(" → ")) + "\n  ✅ Fix: upgrade to " + (.fixedIn[0] // "N/A") + "\n  🆔 " + ((.identifiers.CVE // [])[0] // .id // "N/A")) | join("\n\n")) end)' --arg service "$SERVICE" "$FILE")
+
+              # Send summary as a text message
+              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+                -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+                --data-urlencode "text=${SUMMARY}"
+
+              # Also send the raw JSON as a file for full details
+              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
+                -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+                -F document=@"${FILE}" \
+                -F caption="📎 Full raw report: ${FILE}"
+
+              rm -f "$FILE"
+              echo "$FILE sent and deleted."
+            else
+              echo "Skipping $FILE — not found."
+            fi
+          done
+
+      #------------------------------------
+      #SAST SCANNING REPORT 
+      #---------------------------------------
+      # Downloading SAST reports
+      - name: Download SAST reports
+        uses: actions/download-artifact@v4
+        with:
+          name: sast-report-${{ github.sha }}
+          path: .
+        
+    # ── Send SAST reports to Telegram ───────────
+      - name: Send SAST reports to Telegram
+        run: |
+          for FILE in snyk-auth-sast.json \
+            snyk-backend-sast.json \
+            snyk-setting-sast.json \
+            snyk-upload-sast.json \
+            snyk-frontend-sast.json \
+            snyk-notification-sast.json
+          do
+            if [ -f "$FILE" ]; then
+              SERVICE=$(basename $FILE .json)   # e.g. snyk-auth-sast
+
+              # Parse a human-readable summary from JSON
+              SUMMARY=$(jq -r '. as $scan | ($scan.vulnerabilities // []) as $vulns | "🔍 SAST Report: " + $service + "\n📅 " + (now | strftime("%Y-%m-%d %H:%M UTC")) + "\n📊 Total: " + ($scan.uniqueCount // ($vulns | length)) + "\n\n🚨 Critical: " + ([$vulns[] | select(.severity == "critical")] | length | tostring) + "\n🔴 High: " + ([$vulns[] | select(.severity == "high")] | length | tostring) + "\n🟡 Medium: " + ([$vulns[] | select(.severity == "medium")] | length | tostring) + "\n🟢 Low: " + ([$vulns[] | select(.severity == "low")] | length | tostring) + "\n\n" + (if ($vulns | length) == 0 then "✅ No vulnerabilities found" else "Top Vulns:\n" + ([$vulns[] | select(.severity == "critical" or .severity == "high")] | .[:5] | map("• " + .title + "\n  📦 " + .packageName + "@" + .version + "\n  🔗 " + ((.from // []) | join(" → ")) + "\n  ✅ Fix: upgrade to " + (.fixedIn[0] // "N/A") + "\n  🆔 " + ((.identifiers.CVE // [])[0] // .id // "N/A")) | join("\n\n")) end)' --arg service "$SERVICE" "$FILE")
+
+              # Send summary as a text message
+              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+                -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+                --data-urlencode "text=${SUMMARY}"
+
+              # Also send the raw JSON as a file for full details
+              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
+                -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+                -F document=@"${FILE}" \
+                -F caption="📎 Full raw report: ${FILE}"
+
+              rm -f "$FILE"
+              echo "$FILE sent and deleted."
+            else
+              echo "Skipping $FILE — not found."
+            fi
+          done
+
+      #------------------------------------
+      # SBOM REPORT 
+      #---------------------------------------
+      # Downloading SBOM reports
+      - name: Download SBOM reports
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: .
+        
+    # ── Send SBOM reports to Telegram ───────────
+      - name: Send SBOM reports to Telegram
+        run: |
+          for FILE in auth-service.sbom.json 
+            settings-service.sbom.json 
+            frontend-service.sbom.json 
+            upload-service.sbom.json 
+            notification-service.sbom.json
+          do
+            if [ -f "$FILE" ]; then
+              SERVICE=$(basename $FILE .json)   # e.g. auth-service
+
+              # Parse a human-readable summary from SBOM JSON
+              SUMMARY=$(jq -r '". as $sbom | "📋 SBOM Report: " + $service + "\n📅 " + (now | strftime("%Y-%m-%d %H:%M UTC")) + "\n📦 Components: " + ((.components // []) | length | tostring) + "\n🔗 Dependencies: " + ((.dependencies // []) | length | tostring) + "\n📝 Format: CycloneDX" + "\n\n" + (if ((.components // []) | length) == 0 then "⚠️ No components found" else "📊 Component Summary:\n" + ([(.components // [])[] | select(.type == "library")] | group_by(.name) | map("• " + .[0].name + ": " + (length | tostring) + " version(s)") | .[:10] | join("\n")) end)' --arg service "$SERVICE" "$FILE")
+
+              # Send summary as a text message
+              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" 
+                -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" 
+                --data-urlencode "text=${SUMMARY}"
+
+              # Also send the raw SBOM as a file for full details
+              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" 
+                -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" 
+                -F document=@"${FILE}" 
+                -F caption="📎 Full SBOM: ${FILE}"
+
+              rm -f "$FILE"
+              echo "$FILE sent and deleted."
+            else
+              echo "Skipping $FILE — not found."
+            fi
+          done
+          
+ 
+    
