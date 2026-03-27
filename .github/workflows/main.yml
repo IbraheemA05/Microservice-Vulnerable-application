@@ -88,6 +88,7 @@ jobs:
             --json \
             > ../snyk-auth-sca.json 2>&1 || echo "Snyk found issues in auth"
           cd ..
+          echo "SNYK_AUTH_SCA_JSON_FILE=snyk-auth-sca.json" >> $GITHUB_ENV
 
           cd setting
           snyk test \
@@ -95,6 +96,7 @@ jobs:
             --json \
             > ../snyk-setting-sca.json 2>&1 || echo "Snyk found issues in setting"
           cd ..
+          echo "SNYK_SETTING_SCA_JSON_FILE=snyk-setting-sca.json" >> $GITHUB_ENV
 
           cd upload
           snyk test \
@@ -102,6 +104,7 @@ jobs:
             --json \
             > ../snyk-upload-sca.json 2>&1 || echo "Snyk found issues in upload"
           cd ..
+          echo "SNYK_UPLOAD_SCA_JSON_FILE=snyk-upload-sca.json" >> $GITHUB_ENV
 
           cd frontend
           snyk test \
@@ -109,6 +112,7 @@ jobs:
             --json \
             > ../snyk-frontend-sca.json 2>&1 || echo "Snyk found issues in frontend"
           cd ..
+          echo "SNYK_FRONTEND_SCA_JSON_FILE=snyk-frontend-sca.json" >> $GITHUB_ENV
 
           cd notification
           snyk test \
@@ -116,6 +120,7 @@ jobs:
             --json \
             > ../snyk-notification-sca.json 2>&1 || echo "Snyk found issues in notification"
           cd ..
+          echo "SNYK_NOTIFICATION_SCA_JSON_FILE=snyk-notification-sca.json" >> $GITHUB_ENV
 
       - name: SCA Monitoring
         env:
@@ -129,40 +134,6 @@ jobs:
           snyk monitor --org=$SNYK_ORG --project-name=setting-service
           cd ..
       
-
-      # ------------------------
-      # Parse SCA Results
-      # ------------------------
-      - name: Parse Snyk SCA Results
-        id: parse_sca
-        if: always()
-        run: |
-          parse_service() {
-            local SERVICE=$1
-            local FILE="snyk-${SERVICE}-sca.json"
-
-            # Check if file exists and is valid JSON
-            if [ ! -f "$FILE" ] || ! jq empty "$FILE" 2>/dev/null; then
-              echo "${SERVICE}_critical=N/A" >> $GITHUB_OUTPUT
-              echo "${SERVICE}_high=N/A"     >> $GITHUB_OUTPUT
-              echo "${SERVICE}_total=N/A"    >> $GITHUB_OUTPUT
-              return
-            fi
-
-            CRITICAL=$(jq '[.vulnerabilities[]? | select(.severity == "critical")] | length' "$FILE" 2>/dev/null || echo 0)
-            HIGH=$(jq     '[.vulnerabilities[]? | select(.severity == "high")]     | length' "$FILE" 2>/dev/null || echo 0)
-            TOTAL=$(jq    '.uniqueCount // (.vulnerabilities | length)'            "$FILE" 2>/dev/null || echo 0)
-
-            echo "${SERVICE}_critical=$CRITICAL" >> $GITHUB_OUTPUT
-            echo "${SERVICE}_high=$HIGH"         >> $GITHUB_OUTPUT
-            echo "${SERVICE}_total=$TOTAL"       >> $GITHUB_OUTPUT
-          }
-
-          parse_service "auth"
-          parse_service "setting"
-          parse_service "upload"
-          parse_service "frontend"
-          parse_service "notification"
       # ------------------------
       # LOGIN TO DOCKER
       # ------------------------
@@ -351,7 +322,7 @@ jobs:
       #     fail_action: false
       
       
-   #-------------------------------
+  #-------------------------------
   # JOB 2 - Telegram Configuration
   #-------------------------------
   telegram:
@@ -397,18 +368,25 @@ jobs:
       # ── 1. Send raw SCA JSON files per service ────────────────────────────
       - name: Telegram — Send Auth SCA Report
         run: |
+          REPORT_FILE="{{ env.SNYK_AUTH_SCA_JSON_FILE }}"
+
+          if [ ! -f "$REPORT_FILE" ]; then
+            echo "Report file not found: $REPORT_FILE"
+            exit 1
+          fi
+
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
             -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"snyk-auth-sca.json" \
-            -F caption="📦 *SCA Raw Report — Auth Service*" \
-            -F parse_mode="Markdown"
+            -F document=@"$REPORT_FILE" \
+            -F caption="📦 *SCA Raw Report — ${{ github.repository }}  @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
+            -F parse_mode="Markdown"\
  
       - name: Telegram — Send Setting SCA Report
         run: |
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
             -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -F document=@"snyk-setting-sca.json" \
-            -F caption="📦 *SCA Raw Report — Setting Service*" \
+            -F caption="📦 *SCA Raw Report — ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
             -F parse_mode="Markdown"
  
       - name: Telegram — Send Upload SCA Report
@@ -416,7 +394,7 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
             -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -F document=@"snyk-upload-sca.json" \
-            -F caption="📦 *SCA Raw Report — Upload Service*" \
+            -F caption="📦 *SCA Raw Report — Upload Service - ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
             -F parse_mode="Markdown"
  
       - name: Telegram — Send Frontend SCA Report
@@ -424,7 +402,7 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
             -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -F document=@"snyk-frontend-sca.json" \
-            -F caption="📦 *SCA Raw Report — Frontend*" \
+            -F caption="📦 *SCA Raw Report — Frontend - ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
             -F parse_mode="Markdown"
  
       - name: Telegram — Send Notification SCA Report
@@ -432,6 +410,6 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
             -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -F document=@"snyk-notification-sca.json" \
-            -F caption="📦 *SCA Raw Report — Notification Service*" \
+            -F caption="📦 *SCA Raw Report — Notification Service - ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
             -F parse_mode="Markdown"
           
