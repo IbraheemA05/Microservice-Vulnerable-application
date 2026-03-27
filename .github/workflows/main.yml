@@ -386,86 +386,48 @@ jobs:
           name: snyk-report-${{ github.sha }}
           path: .
 
-      # ── Parse and Send SCA Summary to Telegram ───────────
-      - name: Parse and Send SCA Summary to Telegram
-        run: |
-          # Install jq for JSON parsing
-          sudo apt-get update && sudo apt-get install -y jq
-          
-          SUMMARY=""
-          TOTAL_CRITICAL=0
-          TOTAL_HIGH=0
-          TOTAL_MEDIUM=0
-          TOTAL_LOW=0
-          
-          for SERVICE in auth setting upload frontend notification; do
-            FILE="snyk-${SERVICE}-sca.json"
-            
-            if [ -f "$FILE" ]; then
-              echo "Processing $FILE..."
-              
-              # Parse vulnerability counts
-              CRITICAL=$(jq '[.vulnerabilities[]? | select(.severity == "critical")] | length' "$FILE" 2>/dev/null || echo 0)
-              HIGH=$(jq '[.vulnerabilities[]? | select(.severity == "high")] | length' "$FILE" 2>/dev/null || echo 0)
-              MEDIUM=$(jq '[.vulnerabilities[]? | select(.severity == "medium")] | length' "$FILE" 2>/dev/null || echo 0)
-              LOW=$(jq '[.vulnerabilities[]? | select(.severity == "low")] | length' "$FILE" 2>/dev/null || echo 0)
-              TOTAL=$(jq '.uniqueCount // (.vulnerabilities | length)' "$FILE" 2>/dev/null || echo 0)
-              
-              # Add to totals
-              TOTAL_CRITICAL=$((TOTAL_CRITICAL + CRITICAL))
-              TOTAL_HIGH=$((TOTAL_HIGH + HIGH))
-              TOTAL_MEDIUM=$((TOTAL_MEDIUM + MEDIUM))
-              TOTAL_LOW=$((TOTAL_LOW + LOW))
-              
-              # Format service summary
-              if [ "$TOTAL" -gt 0 ]; then
-                SUMMARY="${SUMMARY}\n🔍 *${SERVICE^} Service:*\n"
-                SUMMARY="${SUMMARY}   🚨 Critical: $CRITICAL\n"
-                SUMMARY="${SUMMARY}   ⚠️ High: $HIGH\n"
-                SUMMARY="${SUMMARY}   📋 Medium: $MEDIUM\n"
-                SUMMARY="${SUMMARY}   ℹ️ Low: $LOW\n"
-                SUMMARY="${SUMMARY}   📊 Total: $TOTAL\n"
-                
-                # Get top 3 high/critical vulnerabilities
-                TOP_VULNS=$(jq -r '.vulnerabilities[]? | select(.severity == "critical" or .severity == "high") | "   • \(.title) (\(.severity))"' "$FILE" 2>/dev/null | head -3)
-                if [ -n "$TOP_VULNS" ]; then
-                  SUMMARY="${SUMMARY}   🏆 Top Issues:\n${TOP_VULNS}\n"
-                fi
-                SUMMARY="${SUMMARY}\n"
-              else
-                SUMMARY="${SUMMARY}\n✅ *${SERVICE^} Service:* No vulnerabilities found\n\n"
-              fi
-              
-              # Send raw JSON file as document
-              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
-                -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-                -F document=@"${FILE}" \
-                -F caption="📄 Raw SCA Report: ${SERVICE^} Service"
-              
-              rm -f "$FILE"
-              echo "$FILE processed and deleted."
-            else
-              echo "Skipping $FILE — not found."
-              SUMMARY="${SUMMARY}\n❌ *${SERVICE^} Service:* Report not found\n\n"
-            fi
-          done
-          
-          # Create overall summary message
-          OVERALL_SUMMARY="*🔍 SCA Security Report Summary* 📊\n\n"
-          OVERALL_SUMMARY="${OVERALL_SUMMARY}📅 Date: $(date -u '+%Y-%m-%d %H:%M UTC')\n"
-          OVERALL_SUMMARY="${OVERALL_SUMMARY}🏗️ Repository: ${{ github.repository }}\n"
-          OVERALL_SUMMARY="${OVERALL_SUMMARY}🌿 Branch: ${{ github.ref_name }}\n\n"
-          OVERALL_SUMMARY="${OVERALL_SUMMARY}*📈 Overall Vulnerability Counts:*\n"
-          OVERALL_SUMMARY="${OVERALL_SUMMARY}   🚨 Critical: $TOTAL_CRITICAL\n"
-          OVERALL_SUMMARY="${OVERALL_SUMMARY}   ⚠️ High: $TOTAL_HIGH\n"
-          OVERALL_SUMMARY="${OVERALL_SUMMARY}   📋 Medium: $TOTAL_MEDIUM\n"
-          OVERALL_SUMMARY="${OVERALL_SUMMARY}   ℹ️ Low: $TOTAL_LOW\n"
-          OVERALL_SUMMARY="${OVERALL_SUMMARY}   📊 Total Issues: $((TOTAL_CRITICAL + TOTAL_HIGH + TOTAL_MEDIUM + TOTAL_LOW))\n\n"
-          OVERALL_SUMMARY="${OVERALL_SUMMARY}*📋 Service Details:*\n${SUMMARY}"
-          
-          # Send summary to Telegram
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -d text="$OVERALL_SUMMARY" \
-            -d parse_mode="Markdown"
- 
+      # ── Send SCA reports to Telegram ───────────
+     - name: Send SCA reports to Telegram
+  run: |
+    for FILE in \
+      snyk-auth-sca.json \
+      snyk-setting-sca.json \
+      snyk-upload-sca.json \
+      snyk-frontend-sca.json \
+      snyk-notification-sca.json
+    do
+      if [ -f "$FILE" ]; then
+        SERVICE=$(basename $FILE .json)   # e.g. snyk-auth-sca
+
+        # Parse a human-readable summary from the JSON
+        SUMMARY=$(jq -r '
+          "🔍 SCA Report: " + $service + "\n" +
+          "📅 " + (now | strftime("%Y-%m-%d %H:%M UTC")) + "\n\n" +
+          "🚨 Critical : " + ([ .vulnerabilities[] | select(.severity == "critical")] | length | tostring) + "\n" +
+          "🔴 High     : " + ([ .vulnerabilities[] | select(.severity == "high")]     | length | tostring) + "\n" +
+          "🟡 Medium   : " + ([ .vulnerabilities[] | select(.severity == "medium")]   | length | tostring) + "\n" +
+          "🟢 Low      : " + ([ .vulnerabilities[] | select(.severity == "low")]      | length | tostring) + "\n\n" +
+          "Top Vulns:\n" +
+          ([ .vulnerabilities[] | select(.severity == "critical" or .severity == "high") ] 
+            | .[:5]   # limit to top 5
+            | map("• " + .title + " (" + .severity + ") — " + .packageName + "@" + .version)
+            | join("\n"))
+        ' --arg service "$SERVICE" "$FILE")
+
+        # Send summary as a text message
+        curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          --data-urlencode "text=${SUMMARY}"
+
+        # Also send the raw JSON as a file for full details
+        curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
+          -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -F document=@"${FILE}" \
+          -F caption="📎 Full raw report: ${FILE}"
+
+        rm -f "$FILE"
+        echo "$FILE sent and deleted."
+      else
+        echo "Skipping $FILE — not found."
+      fi
+    done
