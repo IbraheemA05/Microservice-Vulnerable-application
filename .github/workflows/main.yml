@@ -387,47 +387,47 @@ jobs:
           path: .
 
       # ── Send SCA reports to Telegram ───────────
-     - name: Send SCA reports to Telegram
-  run: |
-    for FILE in \
-      snyk-auth-sca.json \
-      snyk-setting-sca.json \
-      snyk-upload-sca.json \
-      snyk-frontend-sca.json \
-      snyk-notification-sca.json
-    do
-      if [ -f "$FILE" ]; then
-        SERVICE=$(basename $FILE .json)   # e.g. snyk-auth-sca
+      - name: Send SCA reports to Telegram
+        run: |
+          for FILE in \
+            snyk-auth-sca.json \
+            snyk-setting-sca.json \
+            snyk-upload-sca.json \
+            snyk-frontend-sca.json \
+            snyk-notification-sca.json
+          do
+            if [ -f "$FILE" ]; then
+              SERVICE=$(basename $FILE .json)   # e.g. snyk-auth-sca
 
-        # Parse a human-readable summary from the JSON
-        SUMMARY=$(jq -r '
-          "🔍 SCA Report: " + $service + "\n" +
-          "📅 " + (now | strftime("%Y-%m-%d %H:%M UTC")) + "\n\n" +
-          "🚨 Critical : " + ([ .vulnerabilities[] | select(.severity == "critical")] | length | tostring) + "\n" +
-          "🔴 High     : " + ([ .vulnerabilities[] | select(.severity == "high")]     | length | tostring) + "\n" +
-          "🟡 Medium   : " + ([ .vulnerabilities[] | select(.severity == "medium")]   | length | tostring) + "\n" +
-          "🟢 Low      : " + ([ .vulnerabilities[] | select(.severity == "low")]      | length | tostring) + "\n\n" +
-          "Top Vulns:\n" +
-          ([ .vulnerabilities[] | select(.severity == "critical" or .severity == "high") ] 
-            | .[:5]   # limit to top 5
-            | map("• " + .title + " (" + .severity + ") — " + .packageName + "@" + .version)
-            | join("\n"))
-        ' --arg service "$SERVICE" "$FILE")
+              # Parse a human-readable summary from the JSON
+              SUMMARY=$(jq -r '
+                "🔍 SCA Report: " + $service + "\n" +
+                "📅 " + (now | strftime("%Y-%m-%d %H:%M UTC")) + "\n\n" +
+                "🚨 Critical : " + ([ .vulnerabilities[] | select(.severity == "critical")] | length | tostring) + "\n" +
+                "🔴 High     : " + ([ .vulnerabilities[] | select(.severity == "high")]     | length | tostring) + "\n" +
+                "🟡 Medium   : " + ([ .vulnerabilities[] | select(.severity == "medium")]   | length | tostring) + "\n" +
+                "🟢 Low      : " + ([ .vulnerabilities[] | select(.severity == "low")]      | length | tostring) + "\n\n" +
+                "Top Vulns:\n" +
+                ([ .vulnerabilities[] | select(.severity == "critical" or .severity == "high") ] 
+                  | .[:5]   # limit to top 5
+                  | map("• " + .title + " (" + .severity + ") — " + .packageName + "@" + .version)
+                  | join("\n"))
+              ' --arg service "$SERVICE" "$FILE")
 
-        # Send summary as a text message
-        curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          --data-urlencode "text=${SUMMARY}"
+              # Send summary as a text message
+              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+                -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+                --data-urlencode "text=${SUMMARY}"
 
-        # Also send the raw JSON as a file for full details
-        curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
-          -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -F document=@"${FILE}" \
-          -F caption="📎 Full raw report: ${FILE}"
+              # Also send the raw JSON as a file for full details
+              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
+                -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+                -F document=@"${FILE}" \
+                -F caption="📎 Full raw report: ${FILE}"
 
-        rm -f "$FILE"
-        echo "$FILE sent and deleted."
-      else
-        echo "Skipping $FILE — not found."
-      fi
-    done
+              rm -f "$FILE"
+              echo "$FILE sent and deleted."
+            else
+              echo "Skipping $FILE — not found."
+            fi
+          done
