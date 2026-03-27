@@ -49,7 +49,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
 
       # ------------------------
@@ -142,7 +142,21 @@ jobs:
           cd setting
           snyk monitor --org=$SNYK_ORG --project-name=setting-service
           cd ..
-  
+          
+      #------------------------
+      # UPload Report
+      #------------------------
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-report-${{ github.sha }}
+          path: |
+            snyk-auth-sca.json
+            snyk-setting-sca.json
+            snyk-upload-sca.json
+            snyk-frontend-sca.json
+            snyk-notification-sca.json
 
       # ------------------------
       # BUILD IMAGES
@@ -368,7 +382,7 @@ jobs:
       - name: Download scan artifacts
         uses: actions/download-artifact@v4
         with:
-          name: security-reports-${{ github.sha }}
+          name: snyk-report-${{ github.sha }}
  
       # ── 1. Send raw SCA JSON files per service ────────────────────────────
       - name: Telegram — Send Auth SCA Report
