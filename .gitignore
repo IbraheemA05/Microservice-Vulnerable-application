@@ -71,3 +71,4 @@ temp/
 # Session files
 *.txt
 session-*.md
+.docker

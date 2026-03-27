@@ -161,8 +161,8 @@ app.post("/password-reset/request", async (req, res, next) => {
         from: process.env.user,
         to: email,
         subject: "Password Reset Request",
-        text: `Click the following link to reset your password: http://localhost:3000/reset-password?token=${token}\n\nThis link will expire in 1 hour.`,
-        html: `<p>Click the following link to reset your password:</p><p><a href="http://localhost:3000/reset-password?token=${token}">Reset Password</a></p><p>This link will expire in 1 hour.</p>`,
+        text: `Click the following link to reset your password: http://localhost:8080/reset-password.html?token=${token}\n\nThis link will expire in 1 hour.`,
+        html: `<p>Click the following link to reset your password:</p><p><a href="http://localhost:8080/reset-password.html?token=${token}">Reset Password</a></p><p>This link will expire in 1 hour.</p>`,
       };
       
       transporter.sendMail(mailOptions, (error, info) => {

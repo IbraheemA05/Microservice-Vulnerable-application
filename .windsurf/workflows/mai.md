@@ -1,3 +1,6 @@
+---
+auto_execution_mode: 2
+---
 name: Microservices-Vulnerable CI/CD Pipeline
 
 on:
@@ -28,15 +31,6 @@ jobs:
       id-token: write #required for cosign
 
     steps:
-
-      # ------------------------
-      # LOGIN TO DOCKER
-      # ------------------------
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
       # ------------------------
       # CHECKOUT CODE
       # ------------------------
@@ -91,45 +85,20 @@ jobs:
         run: |
           snyk auth $SNYK_TOKEN
 
-          cd auth
-          snyk test \
-            --severity-threshold=high \
-            --json \
-            > ../snyk-auth-sca.json 2>&1 || echo "Snyk found issues in auth"
+          cd auth && snyk test --severity-threshold=high || echo "Snyk scan found issues in auth"
           cd ..
-          echo "SNYK_AUTH_SCA_JSON_FILE=snyk-auth-sca.json" >> $GITHUB_ENV
 
-          cd setting
-          snyk test \
-            --severity-threshold=high \
-            --json \
-            > ../snyk-setting-sca.json 2>&1 || echo "Snyk found issues in setting"
+          cd setting && snyk test --severity-threshold=high || echo "Snyk scan found issues in settings"
           cd ..
-          echo "SNYK_SETTING_SCA_JSON_FILE=snyk-setting-sca.json" >> $GITHUB_ENV
 
-          cd upload
-          snyk test \
-            --severity-threshold=high \
-            --json \
-            > ../snyk-upload-sca.json 2>&1 || echo "Snyk found issues in upload"
+          cd upload && snyk test --severity-threshold=high || echo "Snyk scan found issues in upload"
           cd ..
-          echo "SNYK_UPLOAD_SCA_JSON_FILE=snyk-upload-sca.json" >> $GITHUB_ENV
 
-          cd frontend
-          snyk test \
-            --severity-threshold=high \
-            --json \
-            > ../snyk-frontend-sca.json 2>&1 || echo "Snyk found issues in frontend"
+          cd frontend && snyk test --severity-threshold=high || echo "Snyk scan found issues in frontend"
           cd ..
-          echo "SNYK_FRONTEND_SCA_JSON_FILE=snyk-frontend-sca.json" >> $GITHUB_ENV
 
-          cd notification
-          snyk test \
-            --severity-threshold=high \
-            --json \
-            > ../snyk-notification-sca.json 2>&1 || echo "Snyk found issues in notification"
+          cd notification && snyk test --severity-threshold=high || echo "Snyk scan found issues in notification"
           cd ..
-          echo "SNYK_NOTIFICATION_SCA_JSON_FILE=snyk-notification-sca.json" >> $GITHUB_ENV
 
       - name: SCA Monitoring
         env:
@@ -142,7 +111,15 @@ jobs:
           cd setting
           snyk monitor --org=$SNYK_ORG --project-name=setting-service
           cd ..
-  
+
+      # ------------------------
+      # LOGIN TO DOCKER
+      # ------------------------
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       # ------------------------
       # BUILD IMAGES
@@ -260,14 +237,10 @@ jobs:
           docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/auth-service:${{ github.sha }} ./auth
           docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/auth-service:${{ github.sha }}
 
+      - name: Build & Push Image
+        run: |
           docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }} ./setting
           docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/settings-service:${{ github.sha }}
-
-          docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/frontend-service:${{ github.sha }} ./frontend
-          docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/frontend-service:${{ github.sha }}
-
-          docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/upload-service:${{ github.sha }} ./upload
-          docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/upload-service:${{ github.sha }}
 
       - name: Add digest to image #Very important because cosign need the digest to sign the image and {{github.sha}} is mutable according to docker tag
         run: |
@@ -326,95 +299,26 @@ jobs:
       #     token: ${{}}
       #     fail_action: false
       
-      
-  #-------------------------------
-  # JOB 2 - Telegram Configuration
-  #-------------------------------
-  telegram:
-      name: Telegram Notification
-      runs-on: ubuntu-latest
-      needs: [build-and-secure]
 
-      permissions:
-        contents: read
-        security-events: write
-        id-token: write
+      #-------------------------------
+      # Telegram Configuration
+      #-------------------------------
 
-      steps:
-      #--------------------------
-      # Telegram SBOM 
-      #--------------------------
       - name: Send Telegram Notification
         if: always()  # runs even on failure
         run: |
-            STATUS="${{ job.status }}"
-            REPO="${{ github.repository }}"
-            RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
+          STATUS="${{ job.status }}"
+          REPO="${{ github.repository }}"
+          RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
     
-            MESSAGE="*CI/CD Report* 🚀
-            Repo: $REPO
-            Branch: ${{ github.ref_name }}
-            Status: $STATUS
-            [View Run]($RUN_URL)"
-            curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
-               -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-               -d text="$MESSAGE" \
-               -d parse_mode="Markdown"
+          MESSAGE="*CI/CD Report* 🚀
+          Repo: $REPO
+          Branch: ${{ github.ref_name }}
+          Status: $STATUS
+          [View Run]($RUN_URL)"
 
-      #-----------------------------
-      # COSIGN REPORT
-      #-----------------------------
-      # ── Download report files from scan job ───────────────────────────────
-      - name: Download scan artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: security-reports-${{ github.sha }}
- 
-      # ── 1. Send raw SCA JSON files per service ────────────────────────────
-      - name: Telegram — Send Auth SCA Report
-        run: |
-          REPORT_FILE="{{ env.SNYK_AUTH_SCA_JSON_FILE }}"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d text="$MESSAGE" \
+          -d parse_mode="Markdown"
 
-          if [ ! -f "$REPORT_FILE" ]; then
-            echo "Report file not found: $REPORT_FILE"
-            exit 1
-          fi
-
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"$REPORT_FILE" \
-            -F caption="📦 *SCA Raw Report — ${{ github.repository }}  @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
-            -F parse_mode="Markdown"\
- 
-      - name: Telegram — Send Setting SCA Report
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"snyk-setting-sca.json" \
-            -F caption="📦 *SCA Raw Report — ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
-            -F parse_mode="Markdown"
- 
-      - name: Telegram — Send Upload SCA Report
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"snyk-upload-sca.json" \
-            -F caption="📦 *SCA Raw Report — Upload Service - ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
-            -F parse_mode="Markdown"
- 
-      - name: Telegram — Send Frontend SCA Report
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"snyk-frontend-sca.json" \
-            -F caption="📦 *SCA Raw Report — Frontend - ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
-            -F parse_mode="Markdown"
- 
-      - name: Telegram — Send Notification SCA Report
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F document=@"snyk-notification-sca.json" \
-            -F caption="📦 *SCA Raw Report — Notification Service - ${{github.repository}} @ $(date -u '+%Y-%m-%d %H:%M UTC')"\
-            -F parse_mode="Markdown"
-          
