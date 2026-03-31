@@ -548,13 +548,14 @@ jobs:
       - name: Download SAST reports
         uses: actions/download-artifact@v4
         with:
-          name: sast-report-${{ github.sha }}
+          name: sast-sast-report-${{ github.sha }}
           path: .
         
     # ── Send SAST reports to Telegram ───────────
       - name: Send SAST reports to Telegram
         run: |
-          for FILE in snyk-auth-sast.json \
+          for FILE in \
+            snyk-auth-sast.json \
             snyk-backend-sast.json \
             snyk-setting-sast.json \
             snyk-upload-sast.json \
@@ -598,10 +599,10 @@ jobs:
     # ── Send SBOM reports to Telegram ───────────
       - name: Send SBOM reports to Telegram
         run: |
-          for FILE in auth-service.sbom.json 
-            settings-service.sbom.json 
-            frontend-service.sbom.json 
-            upload-service.sbom.json 
+          for FILE in auth-service.sbom.json \
+            settings-service.sbom.json \
+            frontend-service.sbom.json \
+            upload-service.sbom.json \
             notification-service.sbom.json
           do
             if [ -f "$FILE" ]; then
