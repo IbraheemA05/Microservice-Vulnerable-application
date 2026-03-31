@@ -80,27 +80,27 @@ jobs:
         run: |
           cd auth && snyk code test \
           --json \
-          > ../snyk-auth-sast.json 2>&1 || echo "Snyk scan found issues in auth"
+          > snyk-auth-sast.json 2>&1 || echo "Snyk scan found issues in auth"
           echo "SNYK_AUTH_SAST_JSON_FILE=snyk-auth-sast.json" >> $GITHUB_ENV
 
           cd ../setting && snyk code test \
           --json \
-          > ../snyk-setting-sast.json 2>&1 || echo "Snyk scan found issues in setting"
+          > snyk-setting-sast.json 2>&1 || echo "Snyk scan found issues in setting"
           echo "SNYK_SETTING_SAST_JSON_FILE=snyk-setting-sast.json" >> $GITHUB_ENV
           
           cd ../upload && snyk code test \
           --json \
-          > ../snyk-upload-sast.json 2>&1 || echo "Snyk scan found issues in upload"
+          > snyk-upload-sast.json 2>&1 || echo "Snyk scan found issues in upload"
           echo "SNYK_UPLOAD_SAST_JSON_FILE=snyk-upload-sast.json" >> $GITHUB_ENV
           
           cd ../frontend && snyk code test \
           --json \
-          > ../snyk-frontend-sast.json 2>&1 || echo "Snyk scan found issues in frontend"
+          > snyk-frontend-sast.json 2>&1 || echo "Snyk scan found issues in frontend"
           echo "SNYK_FRONTEND_SAST_JSON_FILE=snyk-frontend-sast.json" >> $GITHUB_ENV
           
           cd ../notification && snyk code test \
           --json \
-          > ../snyk-notification-sast.json 2>&1 || echo "Snyk scan found issues in notification"
+          > snyk-notification-sast.json 2>&1 || echo "Snyk scan found issues in notification"
           echo "SNYK_NOTIFICATION_SAST_JSON_FILE=snyk-notification-sast.json" >> $GITHUB_ENV
 
       #------------------------
