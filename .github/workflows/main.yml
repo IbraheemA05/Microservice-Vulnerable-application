@@ -220,30 +220,37 @@ jobs:
           snyk container test auth-service:${{ github.sha }} \
           --severity-threshold=high \
           --json \
-          > ../snyk-auth-container.json  || echo "High impact vulnerability found in auth-service."
+          > ../snyk-auth-container.json 2>&1 || echo "High impact vulnerability found in auth-service."
           cd ..
           echo "SNYK_AUTH_CONTAINER_JSON_FILE=snyk-auth-container.json" >> $GITHUB_ENV
 
           snyk container test settings-service:${{ github.sha }} \
           --severity-threshold=high \
           --json \
-          > ../snyk-settings-container.json  || echo "High impact vulnerability found in settings-service."
+          > ../snyk-settings-container.json 2>&1  || echo "High impact vulnerability found in settings-service."
           cd ..
           echo "SNYK_SETTINGS_CONTAINER_JSON_FILE=snyk-settings-container.json" >> $GITHUB_ENV
 
           snyk container test frontend-service:${{ github.sha }} \
           --severity-threshold=high 
           --json \
-          > ../snyk-frontend-container.json  || echo "High impact vulnerability found in frontend-service."
+          > ../snyk-frontend-container.json  2>&1  || echo "High impact vulnerability found in frontend-service."
           cd ..
           echo "SNYK_FRONTEND_CONTAINER_JSON_FILE=snyk-frontend-container.json" >> $GITHUB_ENV
 
           snyk container test upload-service:${{ github.sha }} \
           --severity-threshold=high 
           --json \
-          > ../snyk-upload-container.json  || echo "High impact vulnerability found in upload-service."
+          > ../snyk-upload-container.json 2>&1 || echo "High impact vulnerability found in upload-service."
           cd ..
           echo "SNYK_UPLOAD_CONTAINER_JSON_FILE=snyk-upload-container.json" >> $GITHUB_ENV
+
+          snyk container test notification-service:${{ github.sha }} \
+          --severity-threshold=high \
+          --json \
+          > ../snyk-notification-container.json 2>&1 || echo "High impact vulnerability found in notification-service."
+          cd ..
+          echo "SNYK_NOTIFICATION_CONTAINER_JSON_FILE=snyk-notification-container.json" >> $GITHUB_ENV
 
       - name: Container Monitoring
         env:
@@ -268,6 +275,7 @@ jobs:
             snyk-settings-container.json
             snyk-frontend-container.json
             snyk-upload-container.json
+            snyk-notification-container.json
           retention-days: 1
 
     
