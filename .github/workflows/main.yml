@@ -512,7 +512,7 @@ jobs:
         run: |
           for FILE in \
             snyk-auth-container.json \
-            snyk-setting-container.json \
+            snyk-settings-container.json \
             snyk-upload-container.json \
             snyk-frontend-container.json \
             snyk-notification-container.json
