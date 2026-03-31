@@ -79,28 +79,28 @@ jobs:
         continue-on-error: true #This is use to ensure the build completes even if there are issues
         run: |
           cd auth && snyk code test \
-          --json \
-          > snyk-auth-sast.json 2>&1 || echo "Snyk scan found issues in auth"
+            --json \
+            > snyk-auth-sast.json 2>&1 || echo "Snyk scan found issues in auth"
           echo "SNYK_AUTH_SAST_JSON_FILE=snyk-auth-sast.json" >> $GITHUB_ENV
 
           cd ../setting && snyk code test \
-          --json \
-          > snyk-setting-sast.json 2>&1 || echo "Snyk scan found issues in setting"
+            --json \
+            > snyk-setting-sast.json 2>&1 || echo "Snyk scan found issues in setting"
           echo "SNYK_SETTING_SAST_JSON_FILE=snyk-setting-sast.json" >> $GITHUB_ENV
           
           cd ../upload && snyk code test \
-          --json \
-          > snyk-upload-sast.json 2>&1 || echo "Snyk scan found issues in upload"
+            --json \
+            > snyk-upload-sast.json 2>&1 || echo "Snyk scan found issues in upload"
           echo "SNYK_UPLOAD_SAST_JSON_FILE=snyk-upload-sast.json" >> $GITHUB_ENV
           
           cd ../frontend && snyk code test \
-          --json \
-          > snyk-frontend-sast.json 2>&1 || echo "Snyk scan found issues in frontend"
+            --json \
+            > snyk-frontend-sast.json 2>&1 || echo "Snyk scan found issues in frontend"
           echo "SNYK_FRONTEND_SAST_JSON_FILE=snyk-frontend-sast.json" >> $GITHUB_ENV
           
           cd ../notification && snyk code test \
-          --json \
-          > snyk-notification-sast.json 2>&1 || echo "Snyk scan found issues in notification"
+            --json \
+            > snyk-notification-sast.json 2>&1 || echo "Snyk scan found issues in notification"
           echo "SNYK_NOTIFICATION_SAST_JSON_FILE=snyk-notification-sast.json" >> $GITHUB_ENV
 
       #------------------------
@@ -112,11 +112,11 @@ jobs:
         with:
           name: snyk-sast-report-${{ github.sha }}
           path: |
-             snyk-auth-sast.json
-             snyk-setting-sast.json
-             snyk-frontend-sast.json
-             snyk-upload-sast.json
-             snyk-notification-sast.json
+            snyk-auth-sast.json
+            snyk-setting-sast.json
+            snyk-frontend-sast.json
+            snyk-upload-sast.json
+            snyk-notification-sast.json
           retention-days: 1
 
 
@@ -249,7 +249,6 @@ jobs:
             --severity-threshold=high \
             --json \
             > snyk-notification-container.json 2>&1 || echo "High impact vulnerability found in notification-service."
-          cd ..
           echo "SNYK_NOTIFICATION_CONTAINER_JSON_FILE=snyk-notification-container.json" >> $GITHUB_ENV
 
       - name: Container Monitoring
@@ -304,6 +303,9 @@ jobs:
           syft upload-service:${{ github.sha }} \
             -o cyclonedx-json=upload-service.sbom.json
 
+          syft notification-service:${{ github.sha }} \
+            -o cyclonedx-json=notification-service.sbom.json
+
       #------------------------
       # UPLOAD  
       #------------------------
@@ -326,6 +328,10 @@ jobs:
           --file=upload-service.sbom.json \
           --project-name=upload-service
 
+          snyk sbom test \
+          --file=notification-service.sbom.json \
+          --project-name=notification-service
+
       - name: Upload SBOM artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -336,6 +342,7 @@ jobs:
             settings-service.sbom.json
             frontend-service.sbom.json
             upload-service.sbom.json
+            notification-service.sbom.json
 
       #-------------------------
       # COSIGN AND SIGSTORE
@@ -361,6 +368,9 @@ jobs:
           docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/upload-service:${{ github.sha }} ./upload
           docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/upload-service:${{ github.sha }}
 
+          docker build -t docker.io/${{ secrets.DOCKER_USERNAME  }}/notification-service:${{ github.sha }} ./notification
+          docker push docker.io/${{ secrets.DOCKER_USERNAME  }}/notification-service:${{ github.sha }}
+
       - name: Add digest to image #Very important because cosign need the digest to sign the image and {{github.sha}} is mutable according to docker tag
         run: |
           AUTH_DIGEST=$(docker inspect \
@@ -379,11 +389,15 @@ jobs:
             --format='{{index .RepoDigests 0}}' \
             docker.io/${{ secrets.DOCKER_USERNAME }}/upload-service:${{ github.sha }})
 
+          NOTIFICATION_DIGEST=$(docker inspect \
+            --format='{{index .RepoDigests 0}}' \
+            docker.io/${{ secrets.DOCKER_USERNAME }}/notification-service:${{ github.sha }})
+
           echo "AUTH_DIGEST=$AUTH_DIGEST" >> $GITHUB_ENV #Way github pass data to next step
           echo "SETTINGS_DIGEST=$SETTINGS_DIGEST" >> $GITHUB_ENV
           echo "FRONTEND_DIGEST=$FRONTEND_DIGEST" >> $GITHUB_ENV
           echo "UPLOAD_DIGEST=$UPLOAD_DIGEST" >> $GITHUB_ENV
-
+          echo "NOTIFICATION_DIGEST=$NOTIFICATION_DIGEST" >> $GITHUB_ENV
       - name: Sign Image with consign
         env:
           COSIGN_EXPERIMENTAL: "true" #This is to acknowledge the experimental feature(keyless signing)
@@ -392,6 +406,7 @@ jobs:
           cosign sign $SETTINGS_DIGEST
           cosign sign $FRONTEND_DIGEST
           cosign sign $UPLOAD_DIGEST
+          cosign sign $NOTIFICATION_DIGEST
 
       - name: Debug digests
         run: |
@@ -399,6 +414,7 @@ jobs:
           echo "Settings digest: $SETTINGS_DIGEST"
           echo "Frontend digest: $FRONTEND_DIGEST"
           echo "Upload digest: $UPLOAD_DIGEST"
+          echo "Notification digest: $NOTIFICATION_DIGEST"
 
       - name: Run DB Migrations
         run: |
@@ -548,7 +564,7 @@ jobs:
       - name: Download SAST reports
         uses: actions/download-artifact@v4
         with:
-          name: sast-sast-report-${{ github.sha }}
+          name: snyk-sast-report-${{ github.sha }}
           path: .
         
     # ── Send SAST reports to Telegram ───────────
@@ -613,13 +629,13 @@ jobs:
 
               # Send summary as a text message
               curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" 
-                -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" 
+                -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
                 --data-urlencode "text=${SUMMARY}"
 
               # Also send the raw SBOM as a file for full details
-              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" 
-                -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" 
-                -F document=@"${FILE}" 
+              curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
+                -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+                -F document=@"${FILE}" \
                 -F caption="📎 Full SBOM: ${FILE}"
 
               rm -f "$FILE"
