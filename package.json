@@ -15,9 +15,9 @@
   "scripts": {
     "frontend": "npm start --prefix frontend",
     "server": "npm run test --prefix auth",
-    "client": "npm run dev --prefix setting",
-    "notification": "npm run dev --prefix notification",
-    "upload": "npm run dev --prefix upload",
+    "client": "npm run start --prefix setting",
+    "notification": "npm run start --prefix notification",
+    "upload": "npm run start --prefix upload",
     "dev": "concurrently \"npm run server\" \"npm run frontend\" \"npm run client\" \"npm run notification\" \"npm run upload\"",
     "start": "npm run dev"
   },
