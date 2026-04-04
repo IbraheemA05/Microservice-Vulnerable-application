@@ -18,7 +18,8 @@
     "client": "npm run dev --prefix setting",
     "notification": "npm run dev --prefix notification",
     "upload": "npm run dev --prefix upload",
-    "dev": "concurrently \"npm run server\" \"npm run frontend\" \"npm run client\" \"npm run notification\" \"npm run upload\""
+    "dev": "concurrently \"npm run server\" \"npm run frontend\" \"npm run client\" \"npm run notification\" \"npm run upload\"",
+    "start": "npm run dev"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
