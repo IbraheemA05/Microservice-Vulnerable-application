@@ -3,7 +3,7 @@ services:
     build: ./frontend
     container_name: frontend-service
     ports:
-      - "80:80"
+      - "8080:80"
     networks:
       - external-net
     depends_on:
@@ -19,7 +19,7 @@ services:
     build: ./auth
     container_name: auth-service
     ports:
-      - "3000:3000"
+      - "3001:3000"
     env_file:
       - ./auth/.env
     networks:

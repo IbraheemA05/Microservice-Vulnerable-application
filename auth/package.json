@@ -25,11 +25,14 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.0",
     "mongodb": "^7.1.0",
-    "mongoose": "^9.0.2",
-    "nodemailer": "^7.0.12",
-    "uuid": "^13.0.0"
+    "mongoose": "9.1.6",
+    "nodemailer": "9.0.2",
+    "uuid": "13.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
+  },
+  "overrides": {
+    "qs@<=6.15.2": "6.15.2"
   }
 }

@@ -55,7 +55,7 @@ if (signupForm) {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Required for cookies
+        credentials: "include", // NOt required
         body: JSON.stringify({ username, email, password, confirmPassword }),
       });
 

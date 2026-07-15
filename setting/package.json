@@ -12,9 +12,9 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
-    "express": "^4.18.2",
+    "express": "4.22.2",
     "jsonwebtoken": "^9.0.0",
-    "mongoose": "^8.0.1"
+    "mongoose": "8.22.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
@@ -44,5 +44,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/IbraheemA05/Microservice-Vulnerable-application.git"
+  },
+  "overrides": {
+    "body-parser@<=1.20.5": "1.20.5"
   }
 }
