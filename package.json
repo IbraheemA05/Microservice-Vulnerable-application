@@ -12,12 +12,20 @@
   },
   "license": "ISC",
   "author": "IBRAHEEMA05",
-   "scripts": {
+  "scripts": {
+    "frontend": "npm start --prefix frontend",
     "server": "npm run test --prefix auth",
-    "client": "npm start --prefix setting",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "client": "npm run start --prefix setting",
+    "notification": "npm run start --prefix notification",
+    "upload": "npm run start --prefix upload",
+    "dev": "concurrently \"npm run server\" \"npm run frontend\" \"npm run client\" \"npm run notification\" \"npm run upload\"",
+    "start": "npm run dev"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.0",
+    "mongodb": "^7.1.0"
   }
 }

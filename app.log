@@ -1,0 +1,282 @@
+
+> microservices-vulnerable-application@1.0.0 dev
+> concurrently "npm run server" "npm run client" "npm run notification" "npm run upload"
+
+[0] 
+[0] > microservices-vulnerable-application@1.0.0 server
+[0] > npm run test --prefix auth
+[0] 
+[3] 
+[3] > microservices-vulnerable-application@1.0.0 upload
+[3] > npm run dev --prefix upload
+[3] 
+[2] 
+[2] > microservices-vulnerable-application@1.0.0 notification
+[2] > npm run dev --prefix notification
+[2] 
+[1] 
+[1] > microservices-vulnerable-application@1.0.0 client
+[1] > npm run dev --prefix setting
+[1] 
+[2] 
+[2] > notification-service@1.0.0 dev
+[2] > nodemon notificationService.js
+[2] 
+[3] 
+[3] > upload-service@1.0.0 dev
+[3] > nodemon uploadService.js
+[3] 
+[0] 
+[0] > ibraheema05@1.0.0 test
+[0] > nodemon authController
+[0] 
+[1] 
+[1] > setting-service@1.0.0 dev
+[1] > nodemon userSetting.js
+[1] 
+[0] [33m[nodemon] 3.1.11[39m
+[2] [33m[nodemon] 3.1.11[39m
+[2] [33m[nodemon] to restart at any time, enter `rs`[39m
+[2] [33m[nodemon] watching path(s): *.*[39m
+[2] [33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[2] [32m[nodemon] starting `node notificationService.js`[39m
+[0] [33m[nodemon] to restart at any time, enter `rs`[39m
+[0] [33m[nodemon] watching path(s): *.*[39m
+[0] [33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[0] [32m[nodemon] starting `node authController.js`[39m
+[2] node:internal/modules/cjs/loader:1228
+[2]   throw err;
+[2]   ^
+[2] 
+[2] Error: Cannot find module 'dotenv'
+[2] Require stack:
+[2] - /home/windows/Project/microservice-vulnerable-application/notification/notificationService.js
+[2]     at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+[2]     at Function._load (node:internal/modules/cjs/loader:1055:27)
+[2]     at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+[2]     at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+[2]     at Module.require (node:internal/modules/cjs/loader:1311:12)
+[2]     at require (node:internal/modules/helpers:136:16)
+[2]     at Object.<anonymous> (/home/windows/Project/microservice-vulnerable-application/notification/notificationService.js:1:1)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1554:14)
+[2]     at Object..js (node:internal/modules/cjs/loader:1706:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1289:32) {
+[2]   code: 'MODULE_NOT_FOUND',
+[2]   requireStack: [
+[2]     '/home/windows/Project/microservice-vulnerable-application/notification/notificationService.js'
+[2]   ]
+[2] }
+[2] 
+[2] Node.js v22.14.0
+[2] [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[3] [33m[nodemon] 3.1.11[39m
+[3] [33m[nodemon] to restart at any time, enter `rs`[39m
+[3] [33m[nodemon] watching path(s): *.*[39m
+[3] [33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[3] [32m[nodemon] starting `node uploadService.js`[39m
+[0] [dotenv@17.2.3] injecting env (5) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[1] [33m[nodemon] 3.1.11[39m
+[1] [33m[nodemon] to restart at any time, enter `rs`[39m
+[1] [33m[nodemon] watching path(s): *.*[39m
+[1] [33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[1] [32m[nodemon] starting `node userSetting.js`[39m
+[3] node:internal/modules/cjs/loader:1228
+[3]   throw err;
+[3]   ^
+[3] 
+[3] Error: Cannot find module 'dotenv'
+[3] Require stack:
+[3] - /home/windows/Project/microservice-vulnerable-application/upload/uploadService.js
+[3]     at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+[3]     at Function._load (node:internal/modules/cjs/loader:1055:27)
+[3]     at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+[3]     at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+[3]     at Module.require (node:internal/modules/cjs/loader:1311:12)
+[3]     at require (node:internal/modules/helpers:136:16)
+[3]     at Object.<anonymous> (/home/windows/Project/microservice-vulnerable-application/upload/uploadService.js:1:1)
+[3]     at Module._compile (node:internal/modules/cjs/loader:1554:14)
+[3]     at Object..js (node:internal/modules/cjs/loader:1706:10)
+[3]     at Module.load (node:internal/modules/cjs/loader:1289:32) {
+[3]   code: 'MODULE_NOT_FOUND',
+[3]   requireStack: [
+[3]     '/home/windows/Project/microservice-vulnerable-application/upload/uploadService.js'
+[3]   ]
+[3] }
+[3] 
+[3] Node.js v22.14.0
+[3] [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[0] Server is running on port http://localhost:3000
+[1] Setting service is running on port http://localhost:4000
+[0] Error connecting to MongoDB: MongooseServerSelectionError: getaddrinfo ENOTFOUND mongo
+[0]     at _handleConnectionErrors (/home/windows/Project/microservice-vulnerable-application/auth/node_modules/mongoose/lib/connection.js:1169:11)
+[0]     at NativeConnection.openUri (/home/windows/Project/microservice-vulnerable-application/auth/node_modules/mongoose/lib/connection.js:1100:11) {
+[0]   errorLabelSet: Set(0) {},
+[0]   reason: TopologyDescription {
+[0]     type: 'Unknown',
+[0]     servers: Map(1) { 'mongo:27017' => [ServerDescription] },
+[0]     stale: false,
+[0]     compatible: true,
+[0]     heartbeatFrequencyMS: 10000,
+[0]     localThresholdMS: 15,
+[0]     setName: null,
+[0]     maxElectionId: null,
+[0]     maxSetVersion: null,
+[0]     commonWireVersion: 0,
+[0]     logicalSessionTimeoutMinutes: null
+[0]   },
+[0]   code: undefined,
+[0]   cause: TopologyDescription {
+[0]     type: 'Unknown',
+[0]     servers: Map(1) { 'mongo:27017' => [ServerDescription] },
+[0]     stale: false,
+[0]     compatible: true,
+[0]     heartbeatFrequencyMS: 10000,
+[0]     localThresholdMS: 15,
+[0]     setName: null,
+[0]     maxElectionId: null,
+[0]     maxSetVersion: null,
+[0]     commonWireVersion: 0,
+[0]     logicalSessionTimeoutMinutes: null
+[0]   }
+[0] }
+[1] Error connecting to MongoDB: MongooseServerSelectionError: getaddrinfo ENOTFOUND mongo
+[1]     at _handleConnectionErrors (/home/windows/Project/microservice-vulnerable-application/setting/node_modules/mongoose/lib/connection.js:1169:11)
+[1]     at NativeConnection.openUri (/home/windows/Project/microservice-vulnerable-application/setting/node_modules/mongoose/lib/connection.js:1100:11) {
+[1]   errorLabelSet: Set(0) {},
+[1]   reason: TopologyDescription {
+[1]     type: 'Unknown',
+[1]     servers: Map(1) { 'mongo:27017' => [ServerDescription] },
+[1]     stale: false,
+[1]     compatible: true,
+[1]     heartbeatFrequencyMS: 10000,
+[1]     localThresholdMS: 15,
+[1]     setName: null,
+[1]     maxElectionId: null,
+[1]     maxSetVersion: null,
+[1]     commonWireVersion: 0,
+[1]     logicalSessionTimeoutMinutes: null
+[1]   },
+[1]   code: undefined,
+[1]   cause: TopologyDescription {
+[1]     type: 'Unknown',
+[1]     servers: Map(1) { 'mongo:27017' => [ServerDescription] },
+[1]     stale: false,
+[1]     compatible: true,
+[1]     heartbeatFrequencyMS: 10000,
+[1]     localThresholdMS: 15,
+[1]     setName: null,
+[1]     maxElectionId: null,
+[1]     maxSetVersion: null,
+[1]     commonWireVersion: 0,
+[1]     logicalSessionTimeoutMinutes: null
+[1]   }
+[1] }
+[2] [32m[nodemon] restarting due to changes...[39m
+[2] [32m[nodemon] starting `node notificationService.js`[39m
+[2] Notification service is running on port http://localhost:5000
+[3] [32m[nodemon] restarting due to changes...[39m
+[3] [32m[nodemon] starting `node uploadService.js`[39m
+[3] Upload service is running on port http://localhost:6000
+[3] [32m[nodemon] restarting due to changes...[39m
+[3] [32m[nodemon] starting `node uploadService.js`[39m
+[3] [32m[nodemon] restarting due to changes...[39m
+[3] [32m[nodemon] starting `node uploadService.js`[39m
+[3] Upload service is running on port http://localhost:6000
+[2] Error connecting to MongoDB: MongooseServerSelectionError: getaddrinfo ENOTFOUND mongo
+[2]     at _handleConnectionErrors (/home/windows/Project/microservice-vulnerable-application/notification/node_modules/mongoose/lib/connection.js:816:11)
+[2]     at NativeConnection.openUri (/home/windows/Project/microservice-vulnerable-application/notification/node_modules/mongoose/lib/connection.js:791:11)
+[2]     at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[2]   reason: TopologyDescription {
+[2]     type: 'Unknown',
+[2]     servers: Map(1) { 'mongo:27017' => [ServerDescription] },
+[2]     stale: false,
+[2]     compatible: true,
+[2]     heartbeatFrequencyMS: 10000,
+[2]     localThresholdMS: 15,
+[2]     setName: null,
+[2]     maxElectionId: null,
+[2]     maxSetVersion: null,
+[2]     commonWireVersion: 0,
+[2]     logicalSessionTimeoutMinutes: null
+[2]   },
+[2]   code: undefined
+[2] }
+[3] Error connecting to MongoDB: MongooseServerSelectionError: getaddrinfo ENOTFOUND mongo
+[3]     at _handleConnectionErrors (/home/windows/Project/microservice-vulnerable-application/upload/node_modules/mongoose/lib/connection.js:816:11)
+[3]     at NativeConnection.openUri (/home/windows/Project/microservice-vulnerable-application/upload/node_modules/mongoose/lib/connection.js:791:11) {
+[3]   reason: TopologyDescription {
+[3]     type: 'Unknown',
+[3]     servers: Map(1) { 'mongo:27017' => [ServerDescription] },
+[3]     stale: false,
+[3]     compatible: true,
+[3]     heartbeatFrequencyMS: 10000,
+[3]     localThresholdMS: 15,
+[3]     setName: null,
+[3]     maxElectionId: null,
+[3]     maxSetVersion: null,
+[3]     commonWireVersion: 0,
+[3]     logicalSessionTimeoutMinutes: null
+[3]   },
+[3]   code: undefined
+[3] }
+[3] [32m[nodemon] restarting due to changes...[39m
+[3] [32m[nodemon] starting `node uploadService.js`[39m
+[3] node:events:496
+[3]       throw er; // Unhandled 'error' event
+[3]       ^
+[3] 
+[3] Error: listen EADDRINUSE: address already in use :::6000
+[3]     at Server.setupListenHandle [as _listen2] (node:net:1937:16)
+[3]     at listenInCluster (node:net:1994:12)
+[3]     at Server.listen (node:net:2099:7)
+[3]     at Function.listen (/home/windows/Project/microservice-vulnerable-application/upload/node_modules/express/lib/application.js:635:24)
+[3]     at Object.<anonymous> (/home/windows/Project/microservice-vulnerable-application/upload/uploadService.js:362:5)
+[3]     at Module._compile (node:internal/modules/cjs/loader:1554:14)
+[3]     at Object..js (node:internal/modules/cjs/loader:1706:10)
+[3]     at Module.load (node:internal/modules/cjs/loader:1289:32)
+[3]     at Function._load (node:internal/modules/cjs/loader:1108:12)
+[3]     at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+[3] Emitted 'error' event on Server instance at:
+[3]     at emitErrorNT (node:net:1973:8)
+[3]     at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+[3]   code: 'EADDRINUSE',
+[3]   errno: -98,
+[3]   syscall: 'listen',
+[3]   address: '::',
+[3]   port: 6000
+[3] }
+[3] 
+[3] Node.js v22.14.0
+[3] [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[3] [32m[nodemon] restarting due to changes...[39m
+[3] [32m[nodemon] starting `node uploadService.js`[39m
+[3] Upload service is running on port http://localhost:6000
+[3] Error connecting to MongoDB: MongooseServerSelectionError: getaddrinfo ENOTFOUND mongo
+[3]     at _handleConnectionErrors (/home/windows/Project/microservice-vulnerable-application/upload/node_modules/mongoose/lib/connection.js:816:11)
+[3]     at NativeConnection.openUri (/home/windows/Project/microservice-vulnerable-application/upload/node_modules/mongoose/lib/connection.js:791:11)
+[3]     at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+[3]   reason: TopologyDescription {
+[3]     type: 'Unknown',
+[3]     servers: Map(1) { 'mongo:27017' => [ServerDescription] },
+[3]     stale: false,
+[3]     compatible: true,
+[3]     heartbeatFrequencyMS: 10000,
+[3]     localThresholdMS: 15,
+[3]     setName: null,
+[3]     maxElectionId: null,
+[3]     maxSetVersion: null,
+[3]     commonWireVersion: 0,
+[3]     logicalSessionTimeoutMinutes: null
+[3]   },
+[3]   code: undefined
+[3] }
+[3] [32m[nodemon] restarting child process[39m
+[1] npm run client exited with code SIGTERM
+[2] npm run notification exited with code SIGTERM
+[3] npm run upload exited with code SIGTERM
+[0] [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[0] [32m[nodemon] restarting child process[39m
+[0] [32m[nodemon] starting `node authController.js`[39m
+[0] [dotenv@17.2.3] injecting env (5) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[0] Server is running on port http://localhost:3000
+[0] npm run server exited with code SIGTERM

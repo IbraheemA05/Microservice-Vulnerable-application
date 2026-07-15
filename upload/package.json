@@ -1,0 +1,25 @@
+{
+  "name": "upload-service",
+  "version": "1.0.0",
+  "description": "Vulnerable file upload microservice for security testing",
+  "main": "uploadService.js",
+  "scripts": {
+    "start": "node uploadService.js",
+    "dev": "nodemon uploadService.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "4.22.2",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "9.1.6",
+    "multer": "2.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  },
+  "overrides": {
+    "body-parser@<=1.20.5": "1.20.5"
+  }
+}

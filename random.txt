@@ -1,0 +1,50 @@
+# cURL commands for authController.js endpoints
+
+## Sign Up (/signup)
+# Creates a new user.
+curl -X POST http://localhost:3000/signup -H "Content-Type: application/json" -d '{"username":"testuser", "email":"test@example.com", "password":"password123", "confirmPassword":"password123"}'
+
+## Login (/login)
+# Authenticates a user and returns an HTTP-only cookie with a JWT.
+curl -c cookies.txt -X POST http://localhost:3000/login -H "Content-Type: application/json" -d '{"email":"test@example.com", "password":"password123"}'
+
+## Request Password Reset (/passwordReset)
+# Initiates the password reset process.
+curl -X POST http://localhost:3000/passwordReset -H "Content-Type: application/json" -d '{"email":"test@example.com"}'
+
+## Password Reset Form (/passwordReset/:token)
+# Displays the password reset form.
+curl -X GET http://localhost:3000/passwordReset/your_reset_token
+
+## Update Password (/passwordReset)
+# Submits the new password. Note: This endpoint is a GET in the code but should likely be a POST.
+curl -X POST http://localhost:3000/passwordReset -H "Content-Type: application/json" -d '{"token":"your_reset_token", "password":"newPassword123", "confirmPassword":"newPassword123"}'
+
+# cURL commands for setting/userSetting.js endpoints
+
+## Authentication Note
+# The following endpoints are protected and require a valid JWT cookie.
+# To get the cookie, first log in using the /login endpoint from the auth service.
+# You can use curl's cookie jar feature to handle this automatically.
+#
+# 1. Log in and save the cookie (from the auth service on port 3000):
+# curl -c cookies.txt -X POST http://localhost:3000/login -H "Content-Type: application/json" -d '{"email":"test@example.com", "password":"password123"}'
+#
+# 2. Use the saved cookie for subsequent requests to the setting service (on port 4000):
+# curl -b cookies.txt ...
+
+## Get User Details (/me)
+# Retrieves the details of the logged-in user.
+curl -X GET http://localhost:4000/me -b cookies.txt
+
+## Change Username (/user/change-name)
+# Updates the username of the logged-in user.
+curl -X PUT http://localhost:4000/user/change-name -H "Content-Type: application/json" -d '{"username":"newtestuser"}' -b cookies.txt
+
+
+curl http://localhost:3000/health
+curl http://localhost:4000/health
+curl http://localhost:5000/health
+
+
+

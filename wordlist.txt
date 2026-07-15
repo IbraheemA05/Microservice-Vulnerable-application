@@ -1,0 +1,44 @@
+apple
+banana
+orange
+grape
+strawberry
+blueberry
+raspberry
+pineapple
+mango
+peach
+plum
+cherry
+watermelon
+cantaloupe
+kiwi
+lemon
+lime
+coconut
+papaya
+mysecretkey
+avocado
+
+
+
+james234@gmail.com   | james234
+
+
+app.use(cors({
+  origin: ['http://localhost', 'http://localhost:80', 'http://frontend'],
+  credentials: true
+}));
+
+GET REQUEST: 
+POST    :
+PUT:
+DELETE:
+OPTION:
+
+
+MONGO_URI = mongodb://mongo:27017/MVAAUTH
+MONGO_URI=mongodb://127.0.0.1:27017/auth
+
+
+URL : https or http 

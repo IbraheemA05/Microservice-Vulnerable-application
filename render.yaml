@@ -1,0 +1,52 @@
+services:
+  - name: auth-service
+    type: web
+    env: docker
+    imageUrl: docker.io/ibraheema05/auth-service:latest
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: MONGO_URI
+        fromSecret: MONGO_URI
+      - key: JWT_SECRET
+        fromSecret: JWT_SECRET
+
+  - name: settings-service
+    type: web
+    env: docker
+    imageUrl: docker.io/ibraheema05/settings-service:latest
+    envVars:
+      - key: PORT
+        value: "4000"
+      - key: MONGO_URI
+        fromSecret: MONGO_URI
+      - key: JWT_SECRET
+        fromSecret: JWT_SECRET
+
+  - name: frontend
+    type: web
+    env: docker
+    imageUrl: docker.io/ibraheema05/frontend-service:latest
+    envVars:
+      - key: PORT
+        value: "80"
+
+  - name: notification-service
+    type: web
+    env: docker
+    imageUrl: docker.io/ibraheema05/notification-service:latest
+    envVars:
+      - key: PORT
+        value: "5000"
+      - key: MONGO_URI
+        fromSecret: MONGO_URI
+
+  - name: upload-service
+    type: web
+    env: docker
+    imageUrl: docker.io/ibraheema05/upload-service:latest
+    envVars:
+      - key: PORT
+        value: "6000"
+      - key: MONGO_URI
+        fromSecret: MONGO_URI
